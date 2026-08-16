@@ -10,6 +10,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from . import DOMAIN, OvenController
+from .cooktop import CooktopController, async_get_cooktop_controller
 from .dishwasher import DishwasherController, async_get_dishwasher_controller
 from .microwave import MicrowaveController, async_get_microwave_controller
 from .washer import WasherController, async_get_washer_controller
@@ -190,6 +191,47 @@ async def async_setup_platform(
             ]
         )
 
+    cooktop = await async_get_cooktop_controller(hass)
+    if cooktop is not None:
+        for burner in cooktop.burners:
+            number = cooktop.burner_number(burner)
+            entities.extend(
+                [
+                    CooktopTimerButton(
+                        cooktop,
+                        burner,
+                        f"Płyta — Pole {number} — start timera",
+                        "timer_start",
+                        "mdi:timer-play-outline",
+                        cooktop.start_timer,
+                    ),
+                    CooktopTimerButton(
+                        cooktop,
+                        burner,
+                        f"Płyta — Pole {number} — pauza timera",
+                        "timer_pause",
+                        "mdi:timer-pause-outline",
+                        cooktop.pause_timer,
+                    ),
+                    CooktopTimerButton(
+                        cooktop,
+                        burner,
+                        f"Płyta — Pole {number} — wznów timer",
+                        "timer_resume",
+                        "mdi:timer-play-outline",
+                        cooktop.resume_timer,
+                    ),
+                    CooktopTimerButton(
+                        cooktop,
+                        burner,
+                        f"Płyta — Pole {number} — anuluj timer",
+                        "timer_cancel",
+                        "mdi:timer-remove-outline",
+                        cooktop.cancel_timer,
+                    ),
+                ]
+            )
+
     async_add_entities(entities)
 
 
@@ -293,3 +335,30 @@ class DishwasherButton(ButtonEntity):
 
     async def async_press(self) -> None:
         await self._action()
+
+
+class CooktopTimerButton(ButtonEntity):
+    """Stateless countdown-timer command for one cooktop component."""
+
+    _attr_should_poll = False
+
+    def __init__(
+        self,
+        controller: CooktopController,
+        burner: str,
+        name: str,
+        suffix: str,
+        icon: str,
+        action: Callable[[str], Awaitable[None]],
+    ) -> None:
+        self.controller = controller
+        self.burner = burner
+        self._action = action
+        self._attr_name = name
+        self._attr_icon = icon
+        self._attr_unique_id = (
+            f"smartthings_extended_{controller.device_id}_cooktop_{burner}_{suffix}"
+        )
+
+    async def async_press(self) -> None:
+        await self._action(self.burner)
