@@ -1,14 +1,14 @@
 {
   "domain": "smartthings_extended",
   "name": "SmartThings Extended",
-  "version": "0.2.1",
-  "documentation": "https://github.com/Zygiell/smartthings-extended",
-  "issue_tracker": "https://github.com/Zygiell/smartthings-extended/issues",
   "codeowners": [
     "@Zygiell"
   ],
   "dependencies": [
     "smartthings"
   ],
-  "iot_class": "cloud_push"
+  "documentation": "https://github.com/Zygiell/smartthings-extended",
+  "iot_class": "cloud_push",
+  "issue_tracker": "https://github.com/Zygiell/smartthings-extended/issues",
+  "version": "0.2.1"
 }
