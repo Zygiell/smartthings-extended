@@ -8,7 +8,7 @@ does not currently expose as native entities.
 > from Home Assistant's official `smartthings` integration. It does not store
 > a separate SmartThings PAT.
 
-## Current support — v0.3.0
+## Current support — v0.4.0
 
 ### Samsung dual-cavity oven
 
@@ -52,6 +52,36 @@ Before microwave `Start`, the integration refuses to continue when SmartThings
 reports that the door is open. This microwave reports `remoteControlStatus` as
 unavailable, so the oven-specific Smart Control check is not applied to it.
 
+### Samsung washer
+
+The washer is auto-detected from `samsungce.washerCycle.supportedCycles` and
+uses each cycle's advertised `supportedOptions` to build local preparation
+controls dynamically.
+
+The integration exposes:
+
+- wash program
+- water temperature when supported by the selected program
+- spin level when supported by the selected program
+- rinse count when supported by the selected program
+- Bubble Soak when supported by the selected program
+- Send settings
+- Start
+- Pause
+- Resume
+- Cancel
+
+Changing the prepared program immediately recalculates the local option lists
+and defaults. No washer command is sent until **Send settings** or **Start** is
+pressed.
+
+Program IDs are currently exposed as `Program XX` because the appliance status
+provides cycle identifiers but not localized SmartThings display names. Friendly
+cycle-name mapping can be added separately without changing the control model.
+
+Washer `Start` checks `remoteControlStatus.remoteControlEnabled` first and
+refuses to start when Smart Control is disabled.
+
 ### Generic command service
 
 The integration also exposes:
@@ -92,7 +122,7 @@ Restart Home Assistant after changing YAML configuration.
 
 ## Safety
 
-Oven and microwave controls can operate real heating appliances. Test command
+Oven, microwave and washer controls can operate real appliances. Test command
 changes while physically present at the appliance. The integration adds safety
 checks where the device exposes the required state, but users remain responsible
 for safe operation.

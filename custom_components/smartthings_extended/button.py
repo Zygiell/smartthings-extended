@@ -11,6 +11,7 @@ from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from . import DOMAIN, OvenController
 from .microwave import MicrowaveController, async_get_microwave_controller
+from .washer import WasherController, async_get_washer_controller
 
 
 async def async_setup_platform(
@@ -97,6 +98,48 @@ async def async_setup_platform(
             ]
         )
 
+    washer = await async_get_washer_controller(hass)
+    if washer is not None:
+        entities.extend(
+            [
+                WasherButton(
+                    washer,
+                    "Pralka — wyślij ustawienia",
+                    "send_settings",
+                    "mdi:send",
+                    washer.send_settings,
+                ),
+                WasherButton(
+                    washer,
+                    "Pralka — start",
+                    "start",
+                    "mdi:play",
+                    washer.start,
+                ),
+                WasherButton(
+                    washer,
+                    "Pralka — pauza",
+                    "pause",
+                    "mdi:pause",
+                    washer.pause,
+                ),
+                WasherButton(
+                    washer,
+                    "Pralka — wznów",
+                    "resume",
+                    "mdi:play-pause",
+                    washer.resume,
+                ),
+                WasherButton(
+                    washer,
+                    "Pralka — anuluj",
+                    "cancel",
+                    "mdi:stop",
+                    washer.cancel,
+                ),
+            ]
+        )
+
     async_add_entities(entities)
 
 
@@ -146,6 +189,31 @@ class MicrowaveButton(ButtonEntity):
         self._attr_icon = icon
         self._attr_unique_id = (
             f"smartthings_extended_{controller.device_id}_microwave_{suffix}"
+        )
+
+    async def async_press(self) -> None:
+        await self._action()
+
+
+class WasherButton(ButtonEntity):
+    """Stateless washer command button."""
+
+    _attr_should_poll = False
+
+    def __init__(
+        self,
+        controller: WasherController,
+        name: str,
+        suffix: str,
+        icon: str,
+        action: Callable[[], Awaitable[None]],
+    ) -> None:
+        self.controller = controller
+        self._action = action
+        self._attr_name = name
+        self._attr_icon = icon
+        self._attr_unique_id = (
+            f"smartthings_extended_{controller.device_id}_washer_{suffix}"
         )
 
     async def async_press(self) -> None:

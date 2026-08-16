@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.0
+
+- Added Samsung washer auto-detection using `samsungce.washerCycle.supportedCycles`.
+- Added local prepared wash-program selection.
+- Added dynamic water-temperature, spin-level and rinse-count selectors based on the selected program's advertised options.
+- Added Bubble Soak control when the selected program supports it.
+- Added Send settings, Start, Pause, Resume and Cancel buttons.
+- Washer Start checks Smart Control before sending the start command.
+- Prepared settings remain local until Send settings or Start is pressed.
+- Cycle IDs are exposed as `Program XX` until localized SmartThings cycle names are mapped.
+
 ## 0.3.0
 
 - Added Samsung microwave auto-detection using `kitchenModeSpecification.single`.
