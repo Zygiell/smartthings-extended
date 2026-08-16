@@ -11,6 +11,36 @@ from homeassistant.exceptions import HomeAssistantError
 from . import DOMAIN, SMARTTHINGS_DOMAIN
 
 
+_WASHER_PROGRAM_LABELS: dict[str, dict[str, str]] = {
+    "Table_02": {
+        "1C": "Eco 40-60",
+        "2B": "AI Wash",
+        "1B": "Bawełna",
+        "1E": "Pranie szybkie '15",
+        "1D": "Super szybki",
+        "96": "Mniej włókien",
+        "8F": "Ekonomiczne",
+        "25": "Syntetyki",
+        "26": "Delikatne",
+        "33": "Ręczniki",
+        "24": "Pościel",
+        "32": "Koszule",
+        "20": "Higieniczna para",
+        "22": "Wełna",
+        "23": "Odzież wierzchnia",
+        "2F": "Odzież sportowa",
+        "21": "Kolory",
+        "66": "Jeansy",
+        "2E": "Dziecięce",
+        "2D": "Ciche pranie",
+        "30": "Pochmurny dzień",
+        "29": "Czyszczenie bębna+",
+        "27": "Płukanie+Wirowanie",
+        "28": "Odpompow./Wirow.",
+    }
+}
+
+
 class WasherController:
     """Prepared washer settings and SmartThings API access."""
 
@@ -42,11 +72,15 @@ class WasherController:
         if not self.cycles:
             raise HomeAssistantError("Pralka nie zwróciła poprawnych programów.")
 
-        current_course = (
-            main.get("custom.supportedOptions", {})
-            .get("course", {})
-            .get("value")
+        supported_options = main.get("custom.supportedOptions", {})
+        reference_table = supported_options.get("referenceTable", {}).get("value")
+        self.reference_table = (
+            str(reference_table.get("id", ""))
+            if isinstance(reference_table, dict)
+            else ""
         )
+
+        current_course = supported_options.get("course", {}).get("value")
         cycle_ids = self.supported_programs()
         self.selected_program = (
             str(current_course) if str(current_course) in cycle_ids else cycle_ids[0]
@@ -79,7 +113,8 @@ class WasherController:
         return [item["cycle"] for item in self.cycles]
 
     def program_label(self, program: str) -> str:
-        return f"Program {program}"
+        labels = _WASHER_PROGRAM_LABELS.get(self.reference_table, {})
+        return labels.get(program, f"Program {program}")
 
     def program_from_label(self, label: str) -> str:
         for program in self.supported_programs():
