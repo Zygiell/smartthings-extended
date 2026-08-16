@@ -2,8 +2,6 @@
 
 Extends Home Assistant's official SmartThings integration with Samsung
 capabilities that are not currently mapped to native HA entities.
-
-v0.2: Samsung dual-cavity oven controls.
 """
 
 from __future__ import annotations
@@ -13,12 +11,14 @@ from typing import Any, Callable
 
 import voluptuous as vol
 
+from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall
-from homeassistant.exceptions import HomeAssistantError
+from homeassistant.exceptions import ConfigEntryNotReady, HomeAssistantError
 from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers.discovery import async_load_platform
 from homeassistant.helpers.typing import ConfigType
+
+from .linked_device import smartthings_device_entry
 
 DOMAIN = "smartthings_extended"
 SMARTTHINGS_DOMAIN = "smartthings"
@@ -128,7 +128,7 @@ async def _auto_find_oven(hass: HomeAssistant) -> tuple[Any, str, dict[str, Any]
 
             # Some Samsung kitchen appliances (for example microwaves) also
             # expose kitchenModeSpecification. The oven supported by this
-            # release is identified by separate upper/lower cavity specs.
+            # integration is identified by separate upper/lower cavity specs.
             if (
                 isinstance(specification, dict)
                 and isinstance(specification.get("upper"), list)
@@ -304,7 +304,6 @@ class OvenController:
                 f"Temperatura {value}°C jest poza zakresem "
                 f"{minimum:g}–{maximum:g}°C."
             )
-        # Align to the device's advertised resolution.
         aligned = minimum + round((value - minimum) / step) * step
         self.temperature[cavity] = float(
             min(max(aligned, minimum), maximum)
@@ -402,24 +401,62 @@ class OvenController:
         )
 
 
-async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Set up SmartThings Extended from configuration.yaml."""
-    domain_config = config.get(DOMAIN) or {}
-    configured_oven_id = domain_config.get(CONF_OVEN_DEVICE_ID)
+def _link_extended_entities(hass: HomeAssistant, entities: list[Any]) -> None:
+    """Link legacy platform entities directly to official SmartThings devices."""
+    for entity in entities:
+        controller = getattr(entity, "controller", None)
+        device_id = getattr(controller, "device_id", None)
+        if not device_id:
+            continue
 
-    if configured_oven_id:
-        client = _find_client_for_device(hass, configured_oven_id)
-        raw_status = await client.get_raw_device_status(configured_oven_id)
-        oven_id = configured_oven_id
-    else:
-        client, oven_id, raw_status = await _auto_find_oven(hass)
+        # v0.8.0 used DeviceInfo identifiers. HA 2026.8 no longer merges devices
+        # across config entries, so clear that descriptor and link the entity to
+        # the source SmartThings DeviceEntry directly.
+        entity._attr_device_info = None
+        entity.device_entry = smartthings_device_entry(hass, device_id)
 
-    controller = OvenController(client, oven_id, raw_status)
 
-    hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN]["oven"] = controller
+def _install_config_entry_platform_adapters() -> None:
+    """Adapt the existing platform builders to config-entry loading."""
+    from . import button as button_platform
+    from . import number as number_platform
+    from . import select as select_platform
+    from . import switch as switch_platform
 
-    _LOGGER.info("SmartThings Extended found oven %s", oven_id)
+    for module in (
+        select_platform,
+        number_platform,
+        button_platform,
+        switch_platform,
+    ):
+        if hasattr(module, "async_setup_entry"):
+            continue
+
+        legacy_setup = module.async_setup_platform
+
+        async def async_setup_entry_adapter(
+            hass: HomeAssistant,
+            entry: ConfigEntry,
+            async_add_entities: Any,
+            *,
+            _legacy_setup: Any = legacy_setup,
+        ) -> None:
+            def add_entities(
+                entities: Any, update_before_add: bool = False
+            ) -> None:
+                entity_list = list(entities)
+                _link_extended_entities(hass, entity_list)
+                async_add_entities(entity_list, update_before_add)
+
+            await _legacy_setup(hass, entry.data, add_entities, None)
+
+        module.async_setup_entry = async_setup_entry_adapter
+
+
+async def _register_service(hass: HomeAssistant) -> None:
+    """Register the generic SmartThings command service once."""
+    if hass.services.has_service(DOMAIN, SERVICE_SEND_COMMAND):
+        return
 
     async def handle_send_command(call: ServiceCall) -> None:
         device_id: str = call.data["device_id"]
@@ -460,11 +497,53 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         schema=SERVICE_SCHEMA,
     )
 
-    # This integration is intentionally YAML-configured for now. Home Assistant's
-    # supported discovery helper is used to load the entity platforms.
-    for platform in PLATFORMS:
-        hass.async_create_task(
-            async_load_platform(hass, platform, DOMAIN, {}, config)
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Set up the integration and import the legacy YAML configuration."""
+    await _register_service(hass)
+
+    if DOMAIN in config and not hass.config_entries.async_entries(DOMAIN):
+        domain_config = config.get(DOMAIN) or {}
+        await hass.config_entries.flow.async_init(
+            DOMAIN,
+            context={"source": SOURCE_IMPORT},
+            data=dict(domain_config),
         )
 
     return True
+
+
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Set up SmartThings Extended from a config entry."""
+    configured_oven_id = entry.data.get(CONF_OVEN_DEVICE_ID)
+
+    try:
+        if configured_oven_id:
+            client = _find_client_for_device(hass, configured_oven_id)
+            raw_status = await client.get_raw_device_status(configured_oven_id)
+            oven_id = configured_oven_id
+        else:
+            client, oven_id, raw_status = await _auto_find_oven(hass)
+    except HomeAssistantError as err:
+        raise ConfigEntryNotReady(str(err)) from err
+
+    controller = OvenController(client, oven_id, raw_status)
+
+    data = hass.data.setdefault(DOMAIN, {})
+    data["oven"] = controller
+
+    _LOGGER.info("SmartThings Extended found oven %s", oven_id)
+
+    _install_config_entry_platform_adapters()
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    return True
+
+
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Unload SmartThings Extended."""
+    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    if unload_ok:
+        data = hass.data.get(DOMAIN, {})
+        for key in ("oven", "microwave", "washer", "dishwasher", "fridge", "cooktop"):
+            data.pop(key, None)
+    return unload_ok
