@@ -63,6 +63,9 @@ class CooktopController:
                 "Płyta nie zwróciła żadnych komponentów burner-* z wymaganymi capabilities."
             )
 
+        main = components.get("main", {})
+        self._kids_lock_supported = KIDS_LOCK_CAPABILITY in main
+
         self.manual_level: dict[str, float] = {}
         self.heating_mode: dict[str, str] = {}
         self.residual_heat: dict[str, str] = {}
@@ -115,7 +118,12 @@ class CooktopController:
                 self._value(component, HEATING_CAPABILITY, "heatingMode", "manual")
             )
             self.residual_heat[burner] = str(
-                self._value(component, RESIDUAL_HEAT_CAPABILITY, "surfaceResidualHeat", "normal")
+                self._value(
+                    component,
+                    RESIDUAL_HEAT_CAPABILITY,
+                    "surfaceResidualHeat",
+                    "normal",
+                )
             )
             start_value = float(
                 self._value(component, TIMER_CAPABILITY, "startValue", 0) or 0
@@ -238,13 +246,15 @@ class CooktopController:
 
     @property
     def kids_lock_supported(self) -> bool:
-        return self.lock_state in {"locked", "unlocked", "paused"}
+        return self._kids_lock_supported
 
     @property
     def kids_lock_enabled(self) -> bool:
         return self.lock_state == "locked"
 
     async def set_kids_lock(self, enabled: bool) -> None:
+        if not self._kids_lock_supported:
+            raise HomeAssistantError("Płyta nie udostępnia sterowania blokadą dziecięcą.")
         await self._command(
             "main",
             KIDS_LOCK_CAPABILITY,
