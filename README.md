@@ -8,18 +8,26 @@ does not currently expose as native entities.
 > from Home Assistant's official `smartthings` integration. It does not store
 > a separate SmartThings PAT.
 
-## Current support — v0.8.0
+## Current support — v0.8.1
 
 ### Device registry integration
 
-SmartThings Extended entities link to the same Home Assistant device-registry
-entries as entities from the official SmartThings integration. The integration
-uses the official SmartThings identifier shape `("smartthings", device_id)` and
-does not create duplicate appliance devices.
+SmartThings Extended is loaded through a Home Assistant config entry and links
+its entities directly to the existing device-registry entries owned by the
+official SmartThings integration.
 
-As a result, extended entities inherit the existing SmartThings device and area
-assignment (for example `Pralka / Pralnia` or `Lodówka / Kuchnia`) instead of
-appearing as unassigned entities.
+This is important on Home Assistant 2026.8 and newer, where devices are owned by
+a single config entry and helper integrations should link their entities to the
+source device instead of attempting to merge devices by matching identifiers.
+
+Existing YAML configuration is automatically imported into the SmartThings
+Extended config entry on first startup after upgrading. Existing entity IDs and
+unique IDs are preserved, so dashboards and automations do not need to be
+rewritten.
+
+As a result, extended entities can use the same appliance device and area as the
+official SmartThings entities, for example `Pralka / Pralnia` or
+`Lodówka / Kuchnia`.
 
 ### Samsung dual-cavity oven
 
@@ -189,7 +197,7 @@ client already owned by Home Assistant's official SmartThings integration.
 4. Download **SmartThings Extended**.
 5. Restart Home Assistant.
 
-Then add to `configuration.yaml`:
+Existing YAML configuration remains supported as an import source:
 
 ```yaml
 smartthings_extended:
@@ -202,7 +210,8 @@ smartthings_extended:
   oven_device_id: "YOUR_SMARTTHINGS_DEVICE_ID"
 ```
 
-Restart Home Assistant after changing YAML configuration.
+On first startup the YAML data is imported into a SmartThings Extended config
+entry. The imported entry is then used to load all entity platforms.
 
 ## Safety
 

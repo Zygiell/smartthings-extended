@@ -1,0 +1,14 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "SmartThings Extended is already configured.",
+      "single_instance_allowed": "Only one SmartThings Extended instance is supported."
+    },
+    "step": {
+      "user": {
+        "title": "SmartThings Extended",
+        "description": "Use the authenticated client from Home Assistant's official SmartThings integration."
+      }
+    }
+  }
+}

@@ -1,11 +1,19 @@
 # Changelog
 
+## 0.8.1
+
+- Fixed device/area association on Home Assistant 2026.8 and newer.
+- Migrated SmartThings Extended entity loading from legacy YAML platforms to a Home Assistant config entry.
+- Existing `configuration.yaml` settings are automatically imported into the config entry, including an optional pinned oven device ID.
+- Linked extended entities directly to the existing device-registry entries owned by the official SmartThings integration.
+- Preserved existing entity IDs and unique IDs during the migration.
+- Kept the v0.8.0 DeviceInfo helper temporarily for source compatibility; config-entry loading clears it before entities are added.
+
 ## 0.8.0
 
-- Linked SmartThings Extended entities to the device-registry entries created by Home Assistant's official SmartThings integration.
-- Extended entities now use the same `("smartthings", device_id)` identifier as the official integration.
-- Device and area assignments are inherited from the existing SmartThings device instead of appearing as unassigned (`—`).
-- Preserved existing entity IDs and unique IDs; this release only changes device-registry association.
+- Attempted to link SmartThings Extended entities to official SmartThings devices using matching DeviceInfo identifiers.
+- This approach does not attach entities when they are loaded through legacy YAML platforms and is superseded by v0.8.1.
+- Preserved existing entity IDs and unique IDs.
 
 ## 0.7.0
 
@@ -44,7 +52,7 @@
 - Added Samsung washer auto-detection using `samsungce.washerCycle.supportedCycles`.
 - Added local prepared wash-program selection.
 - Added dynamic water-temperature, spin-level and rinse-count selectors based on the selected program's advertised options.
-- Added Bubble Soak control when the selected program supports it.
+- Added Bubble Soak control when supported by the selected program.
 - Added Send settings, Start, Pause, Resume and Cancel buttons.
 - Washer Start checks Smart Control before sending the start command.
 - Prepared settings remain local until Send settings or Start is pressed.
