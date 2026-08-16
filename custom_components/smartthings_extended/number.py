@@ -13,6 +13,7 @@ from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from . import DOMAIN, OvenController
 from .cooktop import CooktopController, async_get_cooktop_controller
+from .linked_device import smartthings_device_info
 from .microwave import MicrowaveController, async_get_microwave_controller
 
 
@@ -69,6 +70,7 @@ class OvenBaseNumber(NumberEntity):
         self._attr_unique_id = (
             f"smartthings_extended_{controller.device_id}_{cavity}_{suffix}"
         )
+        self._attr_device_info = smartthings_device_info(controller.device_id)
 
     async def async_added_to_hass(self) -> None:
         remove = self.controller.add_listener(self.async_write_ha_state)
@@ -149,6 +151,7 @@ class MicrowaveTimeNumber(NumberEntity):
         self._attr_unique_id = (
             f"smartthings_extended_{controller.device_id}_microwave_time"
         )
+        self._attr_device_info = smartthings_device_info(controller.device_id)
 
     @property
     def available(self) -> bool:
@@ -197,6 +200,7 @@ class CooktopTimerNumber(NumberEntity):
         self._attr_unique_id = (
             f"smartthings_extended_{controller.device_id}_cooktop_{burner}_timer"
         )
+        self._attr_device_info = smartthings_device_info(controller.device_id)
 
     @property
     def native_value(self) -> float:

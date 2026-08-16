@@ -8,7 +8,18 @@ does not currently expose as native entities.
 > from Home Assistant's official `smartthings` integration. It does not store
 > a separate SmartThings PAT.
 
-## Current support — v0.7.0
+## Current support — v0.8.0
+
+### Device registry integration
+
+SmartThings Extended entities link to the same Home Assistant device-registry
+entries as entities from the official SmartThings integration. The integration
+uses the official SmartThings identifier shape `("smartthings", device_id)` and
+does not create duplicate appliance devices.
+
+As a result, extended entities inherit the existing SmartThings device and area
+assignment (for example `Pralka / Pralnia` or `Lodówka / Kuchnia`) instead of
+appearing as unassigned entities.
 
 ### Samsung dual-cavity oven
 

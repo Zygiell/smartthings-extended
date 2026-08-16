@@ -11,6 +11,7 @@ from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from .cooktop import CooktopController, async_get_cooktop_controller
 from .fridge import FridgeController, async_get_fridge_controller
+from .linked_device import smartthings_device_info
 
 
 async def async_setup_platform(
@@ -87,6 +88,7 @@ class FridgeBooleanSwitch(SwitchEntity):
         self._attr_unique_id = (
             f"smartthings_extended_{controller.device_id}_fridge_{suffix}"
         )
+        self._attr_device_info = smartthings_device_info(controller.device_id)
 
     @property
     def available(self) -> bool:
@@ -119,6 +121,7 @@ class CooktopKidsLockSwitch(SwitchEntity):
         self._attr_unique_id = (
             f"smartthings_extended_{controller.device_id}_cooktop_kids_lock"
         )
+        self._attr_device_info = smartthings_device_info(controller.device_id)
 
     @property
     def available(self) -> bool:
