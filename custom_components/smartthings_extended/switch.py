@@ -9,6 +9,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
+from .cooktop import CooktopController, async_get_cooktop_controller
 from .fridge import FridgeController, async_get_fridge_controller
 
 
@@ -18,42 +19,48 @@ async def async_setup_platform(
     async_add_entities: AddEntitiesCallback,
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
-    """Set up refrigerator switches."""
-    controller = await async_get_fridge_controller(hass)
-    if controller is None:
-        return
+    """Set up refrigerator and cooktop switches."""
+    entities: list[SwitchEntity] = []
 
-    async_add_entities(
-        [
-            FridgeBooleanSwitch(
-                controller,
-                "Lodówka — AutoFill",
-                "autofill",
-                "mdi:water-plus",
-                lambda: controller.auto_fill,
-                controller.set_auto_fill,
-                lambda: controller.auto_fill_supported,
-            ),
-            FridgeBooleanSwitch(
-                controller,
-                "Lodówka — tryb nocny kostkarki",
-                "icemaker_night_mode",
-                "mdi:weather-night",
-                lambda: controller.icemaker_night_mode,
-                controller.set_icemaker_night_mode,
-                lambda: controller.icemaker_night_mode_supported,
-            ),
-            FridgeBooleanSwitch(
-                controller,
-                "Lodówka — lampka nocna",
-                "night_light",
-                "mdi:lightbulb-night",
-                lambda: controller.night_light,
-                controller.set_night_light,
-                lambda: controller.night_light_supported,
-            ),
-        ]
-    )
+    fridge = await async_get_fridge_controller(hass)
+    if fridge is not None:
+        entities.extend(
+            [
+                FridgeBooleanSwitch(
+                    fridge,
+                    "Lodówka — AutoFill",
+                    "autofill",
+                    "mdi:water-plus",
+                    lambda: fridge.auto_fill,
+                    fridge.set_auto_fill,
+                    lambda: fridge.auto_fill_supported,
+                ),
+                FridgeBooleanSwitch(
+                    fridge,
+                    "Lodówka — tryb nocny kostkarki",
+                    "icemaker_night_mode",
+                    "mdi:weather-night",
+                    lambda: fridge.icemaker_night_mode,
+                    fridge.set_icemaker_night_mode,
+                    lambda: fridge.icemaker_night_mode_supported,
+                ),
+                FridgeBooleanSwitch(
+                    fridge,
+                    "Lodówka — lampka nocna",
+                    "night_light",
+                    "mdi:lightbulb-night",
+                    lambda: fridge.night_light,
+                    fridge.set_night_light,
+                    lambda: fridge.night_light_supported,
+                ),
+            ]
+        )
+
+    cooktop = await async_get_cooktop_controller(hass)
+    if cooktop is not None:
+        entities.append(CooktopKidsLockSwitch(cooktop))
+
+    async_add_entities(entities)
 
 
 class FridgeBooleanSwitch(SwitchEntity):
@@ -94,6 +101,38 @@ class FridgeBooleanSwitch(SwitchEntity):
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         await self._state_setter(False)
+
+    async def async_added_to_hass(self) -> None:
+        remove = self.controller.add_listener(self.async_write_ha_state)
+        self.async_on_remove(remove)
+
+
+class CooktopKidsLockSwitch(SwitchEntity):
+    """Direct cooktop child-lock control."""
+
+    _attr_should_poll = False
+    _attr_name = "Płyta — blokada dziecięca"
+    _attr_icon = "mdi:lock"
+
+    def __init__(self, controller: CooktopController) -> None:
+        self.controller = controller
+        self._attr_unique_id = (
+            f"smartthings_extended_{controller.device_id}_cooktop_kids_lock"
+        )
+
+    @property
+    def available(self) -> bool:
+        return self.controller.kids_lock_supported
+
+    @property
+    def is_on(self) -> bool:
+        return self.controller.kids_lock_enabled
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        await self.controller.set_kids_lock(True)
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        await self.controller.set_kids_lock(False)
 
     async def async_added_to_hass(self) -> None:
         remove = self.controller.add_listener(self.async_write_ha_state)
