@@ -1,0 +1,32 @@
+send_command:
+  name: Wyślij komendę SmartThings
+  description: >-
+    Wysyła dowolną komendę do capability urządzenia przez klienta OAuth
+    oficjalnej integracji SmartThings w Home Assistant.
+  fields:
+    device_id:
+      name: Device ID
+      required: true
+      selector:
+        text:
+    component:
+      name: Component
+      required: true
+      default: "main"
+      selector:
+        text:
+    capability:
+      name: Capability
+      required: true
+      selector:
+        text:
+    command:
+      name: Command
+      required: true
+      selector:
+        text:
+    arguments:
+      name: Arguments
+      required: false
+      selector:
+        object:
