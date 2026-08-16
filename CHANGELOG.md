@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.0
+
+- Linked SmartThings Extended entities to the device-registry entries created by Home Assistant's official SmartThings integration.
+- Extended entities now use the same `("smartthings", device_id)` identifier as the official integration.
+- Device and area assignments are inherited from the existing SmartThings device instead of appearing as unassigned (`—`).
+- Preserved existing entity IDs and unique IDs; this release only changes device-registry association.
+
 ## 0.7.0
 
 - Added Samsung cooktop auto-detection using `burner-*` components.
