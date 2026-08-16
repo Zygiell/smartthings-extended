@@ -346,24 +346,47 @@ class OvenController:
             argument=argument,
         )
 
-    async def send_settings(self, cavity: str) -> None:
-        """Send prepared mode, temperature and operation time without starting."""
-        mode = self.selected_mode[cavity]
-        temperature = self.temperature[cavity]
-        minutes = self.time_minutes[cavity]
+    async def _batch_commands(self, commands: list[dict[str, Any]]) -> None:
+        """Send multiple oven commands in one SmartThings request."""
+        post = getattr(self.client, "_post", None)
+        if post is None:
+            raise HomeAssistantError(
+                "Ta wersja pysmartthings nie obsługuje wymaganego batch requestu."
+            )
+        await post(
+            f"v1/devices/{self.device_id}/commands",
+            data={"commands": commands},
+        )
 
-        await self._command(
-            cavity, "samsungce.ovenMode", "setOvenMode", mode
+    async def send_settings(self, cavity: str) -> None:
+        """Send prepared mode, temperature and time together without starting."""
+        component = CAVITY_COMPONENT[cavity]
+        temperature = self.temperature[cavity]
+        temperature_argument: int | float = (
+            int(temperature) if temperature.is_integer() else temperature
         )
-        await self._command(
-            cavity, "ovenSetpoint", "setOvenSetpoint", temperature
-        )
-        await self._command(
-            cavity,
-            "samsungce.ovenOperatingState",
-            "setOperationTime",
-            _minutes_to_time(minutes),
-        )
+
+        commands: list[dict[str, Any]] = [
+            {
+                "component": component,
+                "capability": "samsungce.ovenMode",
+                "command": "setOvenMode",
+                "arguments": [self.selected_mode[cavity]],
+            },
+            {
+                "component": component,
+                "capability": "ovenSetpoint",
+                "command": "setOvenSetpoint",
+                "arguments": [temperature_argument],
+            },
+            {
+                "component": component,
+                "capability": "samsungce.ovenOperatingState",
+                "command": "setOperationTime",
+                "arguments": [_minutes_to_time(self.time_minutes[cavity])],
+            },
+        ]
+        await self._batch_commands(commands)
 
     async def remote_control_enabled(self) -> bool:
         """Read current Smart Control status before a remote start."""
