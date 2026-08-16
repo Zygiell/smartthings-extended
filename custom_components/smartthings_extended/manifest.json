@@ -10,5 +10,5 @@
   "documentation": "https://github.com/Zygiell/smartthings-extended",
   "iot_class": "cloud_push",
   "issue_tracker": "https://github.com/Zygiell/smartthings-extended/issues",
-  "version": "0.5.0"
+  "version": "0.6.0"
 }
