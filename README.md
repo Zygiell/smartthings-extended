@@ -8,7 +8,7 @@ does not currently expose as native entities.
 > from Home Assistant's official `smartthings` integration. It does not store
 > a separate SmartThings PAT.
 
-## Current support — v0.6.0
+## Current support — v0.7.0
 
 ### Samsung dual-cavity oven
 
@@ -129,6 +129,32 @@ sends the corresponding SmartThings command. The current Night Mode schedule is
 read by the controller but schedule editing is intentionally deferred until a
 proper time-based Home Assistant UI is added.
 
+### Samsung cooktop
+
+The cooktop is auto-detected from `burner-*` components exposing
+`samsungce.cooktopHeatingPower` and `samsungce.countDownTimer`.
+
+For the tested cooktop SmartThings reports six logical burner components. The
+integration intentionally keeps them named **Pole 1…6** because the device does
+not advertise their physical positions.
+
+The integration adds:
+
+- one locally prepared countdown-timer value per burner
+- Start / Pause / Resume / Cancel for each burner timer
+- child-lock on/off using `samsungce.kidsLockControl`
+- live burner/timer state tracking through SmartThings device events
+
+The tested `samsungce.cooktopHeatingPower` capability exposes burner power level
+and heating mode as attributes but advertises **no commands**. SmartThings
+Extended therefore does not expose remote burner-power or heating-mode controls
+and does not attempt undocumented commands. Existing read-only burner entities
+from Home Assistant's official SmartThings integration are not duplicated.
+
+The countdown-timer capability does not advertise a device-specific maximum in
+its schema, so the Home Assistant preparation control is conservatively capped
+at 1–1440 minutes. SmartThings remains the final validator of submitted values.
+
 ### Generic command service
 
 The integration also exposes:
@@ -171,9 +197,12 @@ Restart Home Assistant after changing YAML configuration.
 
 Oven, microwave, washer and dishwasher controls can operate real appliances.
 Test command changes while physically present at the appliance. Refrigerator
-controls can immediately alter operating modes or convenience features. The
-integration adds safety checks where the device exposes the required state, but
-users remain responsible for safe operation.
+controls can immediately alter operating modes or convenience features.
+Cooktop support intentionally does not expose burner heating control because the
+tested SmartThings heating-power capability does not publish write commands.
+Cooktop timer and child-lock commands can still alter the appliance state.
+The integration adds safety checks where the device exposes the required state,
+but users remain responsible for safe operation.
 
 ## Notes
 
