@@ -10,6 +10,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from . import DOMAIN, OvenController
+from .dishwasher import DishwasherController, async_get_dishwasher_controller
 from .microwave import MicrowaveController, async_get_microwave_controller
 from .washer import WasherController, async_get_washer_controller
 
@@ -140,6 +141,55 @@ async def async_setup_platform(
             ]
         )
 
+    dishwasher = await async_get_dishwasher_controller(hass)
+    if dishwasher is not None:
+        entities.extend(
+            [
+                DishwasherButton(
+                    dishwasher,
+                    "Zmywarka — wyślij ustawienia",
+                    "send_settings",
+                    "mdi:send",
+                    dishwasher.send_settings,
+                ),
+                DishwasherButton(
+                    dishwasher,
+                    "Zmywarka — start",
+                    "start",
+                    "mdi:play",
+                    dishwasher.start,
+                ),
+                DishwasherButton(
+                    dishwasher,
+                    "Zmywarka — pauza",
+                    "pause",
+                    "mdi:pause",
+                    dishwasher.pause,
+                ),
+                DishwasherButton(
+                    dishwasher,
+                    "Zmywarka — wznów",
+                    "resume",
+                    "mdi:play-pause",
+                    dishwasher.resume,
+                ),
+                DishwasherButton(
+                    dishwasher,
+                    "Zmywarka — anuluj",
+                    "cancel",
+                    "mdi:stop",
+                    dishwasher.cancel,
+                ),
+                DishwasherButton(
+                    dishwasher,
+                    "Zmywarka — anuluj i wypompuj",
+                    "cancel_and_drain",
+                    "mdi:water-pump",
+                    dishwasher.cancel_and_drain,
+                ),
+            ]
+        )
+
     async_add_entities(entities)
 
 
@@ -214,6 +264,31 @@ class WasherButton(ButtonEntity):
         self._attr_icon = icon
         self._attr_unique_id = (
             f"smartthings_extended_{controller.device_id}_washer_{suffix}"
+        )
+
+    async def async_press(self) -> None:
+        await self._action()
+
+
+class DishwasherButton(ButtonEntity):
+    """Stateless dishwasher command button."""
+
+    _attr_should_poll = False
+
+    def __init__(
+        self,
+        controller: DishwasherController,
+        name: str,
+        suffix: str,
+        icon: str,
+        action: Callable[[], Awaitable[None]],
+    ) -> None:
+        self.controller = controller
+        self._action = action
+        self._attr_name = name
+        self._attr_icon = icon
+        self._attr_unique_id = (
+            f"smartthings_extended_{controller.device_id}_dishwasher_{suffix}"
         )
 
     async def async_press(self) -> None:
