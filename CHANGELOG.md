@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.6.0
+
+- Added Samsung refrigerator auto-detection using the CoolSelect+ `cvroom` component.
+- Added CoolSelect+ mode selection using the refrigerator's advertised modes.
+- Added direct AutoFill Pitcher control.
+- Added direct ice-maker Night Mode control.
+- Added refrigerator Night Light control and Night Light brightness selection.
+- Added door-alarm sound selection using the appliance-advertised sound list.
+- Added the Home Assistant switch platform for direct refrigerator toggles.
+- Avoided duplicating refrigerator controls already exposed by the official SmartThings integration.
+- Night Mode schedule editing is deferred until a proper time-based Home Assistant UI is added.
+
 ## 0.5.0
 
 - Added Samsung dishwasher auto-detection using `samsungce.dishwasherWashingCourse.supportedCourses`.
