@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.3
+
+- Changed Samsung oven prepared settings to send mode, temperature and operation time in one SmartThings device-command batch.
+- Oven Start keeps the existing Smart Control check and sends the prepared-settings batch before the separate start command.
+- Preserved the existing upper/lower cavity entity IDs and controls.
+
 ## 0.8.2
 
 - Fixed Samsung microwave prepared settings by sending mode, power and operation time in a single SmartThings device-command batch.
