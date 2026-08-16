@@ -8,6 +8,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from . import DOMAIN, OvenController
+from .dishwasher import DishwasherController, async_get_dishwasher_controller
 from .microwave import MicrowaveController, async_get_microwave_controller
 from .washer import WasherController, async_get_washer_controller
 
@@ -48,6 +49,17 @@ async def async_setup_platform(
                 WasherSpinSelect(washer),
                 WasherRinseSelect(washer),
                 WasherBubbleSelect(washer),
+            ]
+        )
+
+    dishwasher = await async_get_dishwasher_controller(hass)
+    if dishwasher is not None:
+        entities.extend(
+            [
+                DishwasherCourseSelect(dishwasher),
+                DishwasherZoneSelect(dishwasher),
+                DishwasherSpeedBoosterSelect(dishwasher),
+                DishwasherSanitizeSelect(dishwasher),
             ]
         )
 
@@ -302,3 +314,127 @@ class WasherBubbleSelect(WasherBaseSelect):
 
     async def async_select_option(self, option: str) -> None:
         self.controller.set_bubble(self.controller.bubble_from_label(option))
+
+
+class DishwasherBaseSelect(SelectEntity):
+    """Base select for locally prepared dishwasher settings."""
+
+    _attr_should_poll = False
+
+    def __init__(self, controller: DishwasherController, suffix: str) -> None:
+        self.controller = controller
+        self._attr_unique_id = (
+            f"smartthings_extended_{controller.device_id}_dishwasher_{suffix}"
+        )
+
+    async def async_added_to_hass(self) -> None:
+        remove = self.controller.add_listener(self.async_write_ha_state)
+        self.async_on_remove(remove)
+
+
+class DishwasherCourseSelect(DishwasherBaseSelect):
+    _attr_name = "Zmywarka — program"
+    _attr_icon = "mdi:dishwasher"
+
+    def __init__(self, controller: DishwasherController) -> None:
+        super().__init__(controller, "course")
+
+    @property
+    def options(self) -> list[str]:
+        return [
+            self.controller.course_label(value)
+            for value in self.controller.supported_courses()
+        ]
+
+    @property
+    def current_option(self) -> str:
+        return self.controller.course_label(self.controller.selected_course)
+
+    async def async_select_option(self, option: str) -> None:
+        self.controller.set_course(self.controller.course_from_label(option))
+
+
+class DishwasherZoneSelect(DishwasherBaseSelect):
+    _attr_name = "Zmywarka — strefa"
+    _attr_icon = "mdi:dishwasher"
+
+    def __init__(self, controller: DishwasherController) -> None:
+        super().__init__(controller, "zone")
+
+    @property
+    def available(self) -> bool:
+        return bool(self.controller.zone_values())
+
+    @property
+    def options(self) -> list[str]:
+        return [
+            self.controller.zone_label(value)
+            for value in self.controller.zone_values()
+        ]
+
+    @property
+    def current_option(self) -> str | None:
+        if not self.controller.selected_zone:
+            return None
+        return self.controller.zone_label(self.controller.selected_zone)
+
+    async def async_select_option(self, option: str) -> None:
+        self.controller.set_zone(self.controller.zone_from_label(option))
+
+
+class DishwasherSpeedBoosterSelect(DishwasherBaseSelect):
+    _attr_name = "Zmywarka — Speed Booster"
+    _attr_icon = "mdi:speedometer"
+
+    def __init__(self, controller: DishwasherController) -> None:
+        super().__init__(controller, "speed_booster")
+
+    @property
+    def available(self) -> bool:
+        return bool(self.controller.speed_booster_values())
+
+    @property
+    def options(self) -> list[str]:
+        return [
+            self.controller.bool_label(value)
+            for value in self.controller.speed_booster_values()
+        ]
+
+    @property
+    def current_option(self) -> str | None:
+        if not self.controller.speed_booster_values():
+            return None
+        return self.controller.bool_label(self.controller.speed_booster)
+
+    async def async_select_option(self, option: str) -> None:
+        self.controller.set_speed_booster(
+            self.controller.bool_from_label(option)
+        )
+
+
+class DishwasherSanitizeSelect(DishwasherBaseSelect):
+    _attr_name = "Zmywarka — Sanitize"
+    _attr_icon = "mdi:shield-check"
+
+    def __init__(self, controller: DishwasherController) -> None:
+        super().__init__(controller, "sanitize")
+
+    @property
+    def available(self) -> bool:
+        return bool(self.controller.sanitize_values())
+
+    @property
+    def options(self) -> list[str]:
+        return [
+            self.controller.bool_label(value)
+            for value in self.controller.sanitize_values()
+        ]
+
+    @property
+    def current_option(self) -> str | None:
+        if not self.controller.sanitize_values():
+            return None
+        return self.controller.bool_label(self.controller.sanitize)
+
+    async def async_select_option(self, option: str) -> None:
+        self.controller.set_sanitize(self.controller.bool_from_label(option))
