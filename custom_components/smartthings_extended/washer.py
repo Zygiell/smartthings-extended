@@ -274,6 +274,14 @@ class WasherController:
         )
         return str(value).lower() == "true"
 
+    async def _set_machine_state(self, state: str) -> None:
+        """Set the washer state through the live washerOperatingState capability."""
+        await self._command(
+            "washerOperatingState",
+            "setMachineState",
+            state,
+        )
+
     async def start(self) -> None:
         """Apply prepared settings and start the washer."""
         if not await self.remote_control_enabled():
@@ -281,16 +289,16 @@ class WasherController:
                 "Smart Control pralki jest wyłączony. Włącz Smart Control na pralce przed Start."
             )
         await self.send_settings()
-        await self._command("samsungce.washerOperatingState", "start")
+        await self._set_machine_state("run")
 
     async def pause(self) -> None:
-        await self._command("samsungce.washerOperatingState", "pause")
+        await self._set_machine_state("pause")
 
     async def resume(self) -> None:
-        await self._command("samsungce.washerOperatingState", "resume")
+        await self._set_machine_state("run")
 
     async def cancel(self) -> None:
-        await self._command("samsungce.washerOperatingState", "cancel")
+        await self._set_machine_state("stop")
 
 
 async def _auto_find_washer(
@@ -316,16 +324,17 @@ async def _auto_find_washer(
                 .get("supportedCycles", {})
                 .get("value")
             )
-            operating_state = main.get("samsungce.washerOperatingState")
+            machine_state = main.get("washerOperatingState")
             if (
                 isinstance(supported_cycles, list)
                 and bool(supported_cycles)
-                and isinstance(operating_state, dict)
+                and isinstance(machine_state, dict)
             ):
                 return client, device_id, raw_status
 
     raise HomeAssistantError(
-        "Nie znaleziono pralki SmartThings z samsungce.washerCycle.supportedCycles."
+        "Nie znaleziono pralki SmartThings z samsungce.washerCycle.supportedCycles "
+        "i washerOperatingState."
     )
 
 
