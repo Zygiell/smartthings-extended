@@ -221,27 +221,56 @@ class MicrowaveController:
             argument=argument,
         )
 
-    async def send_settings(self) -> None:
-        """Send prepared mode and mode-specific options without starting."""
-        await self._command(
-            "samsungce.ovenMode",
-            "setOvenMode",
-            self.selected_mode,
+    async def _batch_commands(self, commands: list[dict[str, Any]]) -> None:
+        """Send multiple SmartThings commands in one device command request.
+
+        pysmartthings currently exposes only execute_device_command(), which
+        always posts a single command. Samsung microwave power is accepted by
+        the tested appliance only when mode, power and time are sent together,
+        so use the same authenticated pysmartthings POST helper for the batch.
+        """
+        post = getattr(self.client, "_post", None)
+        if post is None:
+            raise HomeAssistantError(
+                "Ta wersja pysmartthings nie obsługuje wymaganego batch requestu."
+            )
+        await post(
+            f"v1/devices/{self.device_id}/commands",
+            data={"commands": commands},
         )
 
+    async def send_settings(self) -> None:
+        """Send prepared mode and options together without starting."""
+        commands: list[dict[str, Any]] = [
+            {
+                "component": "main",
+                "capability": "samsungce.ovenMode",
+                "command": "setOvenMode",
+                "arguments": [self.selected_mode],
+            }
+        ]
+
         if self.power_levels():
-            await self._command(
-                "samsungce.microwavePower",
-                "setPowerLevel",
-                self.power_level,
+            commands.append(
+                {
+                    "component": "main",
+                    "capability": "samsungce.microwavePower",
+                    "command": "setPowerLevel",
+                    "arguments": [self.power_level],
+                }
             )
 
         if self.has_operation_time():
-            await self._command(
-                "samsungce.ovenOperatingState",
-                "setOperationTime",
-                _seconds_to_time(self.time_seconds),
+            commands.append(
+                {
+                    "component": "main",
+                    "capability": "samsungce.ovenOperatingState",
+                    "command": "setOperationTime",
+                    "arguments": [_seconds_to_time(self.time_seconds)],
+                }
             )
+
+        await self._batch_commands(commands)
 
     async def _door_is_closed(self) -> bool | None:
         raw = await self.client.get_raw_device_status(self.device_id)
