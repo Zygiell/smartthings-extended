@@ -504,10 +504,12 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     if DOMAIN in config and not hass.config_entries.async_entries(DOMAIN):
         domain_config = config.get(DOMAIN) or {}
-        await hass.config_entries.flow.async_init(
-            DOMAIN,
-            context={"source": SOURCE_IMPORT},
-            data=dict(domain_config),
+        hass.async_create_task(
+            hass.config_entries.flow.async_init(
+                DOMAIN,
+                context={"source": SOURCE_IMPORT},
+                data=dict(domain_config),
+            )
         )
 
     return True
