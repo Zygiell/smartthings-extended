@@ -8,7 +8,7 @@ does not currently expose as native entities.
 > from Home Assistant's official `smartthings` integration. It does not store
 > a separate SmartThings PAT.
 
-## Current support — v0.2.1
+## Current support — v0.3.0
 
 ### Samsung dual-cavity oven
 
@@ -27,6 +27,30 @@ The supported modes and temperature/time limits are read from the device's
 
 `Start` checks `remoteControlStatus.remoteControlEnabled` first and refuses to
 start the oven when Smart Control is disabled.
+
+### Samsung microwave
+
+The microwave is auto-detected from a `single` kitchen mode specification that
+contains a directly settable `MicroWave` mode.
+
+The integration exposes:
+
+- mode
+- microwave power when the selected mode supports it
+- operation time in seconds using the device-advertised limits and resolution
+- Send settings
+- Start
+- Pause
+- Stop
+
+For the tested Samsung NQ7000B family, the device advertises microwave power
+levels from 100 W to 900 W and a 10-second operation-time resolution. Other
+compatible devices are read dynamically from their own SmartThings mode
+specification.
+
+Before microwave `Start`, the integration refuses to continue when SmartThings
+reports that the door is open. This microwave reports `remoteControlStatus` as
+unavailable, so the oven-specific Smart Control check is not applied to it.
 
 ### Generic command service
 
@@ -68,10 +92,10 @@ Restart Home Assistant after changing YAML configuration.
 
 ## Safety
 
-Oven controls can operate a real heating appliance. Test commands while
-physically present at the appliance. The integration deliberately refuses a
-remote `Start` when Smart Control is disabled, but users remain responsible for
-safe operation.
+Oven and microwave controls can operate real heating appliances. Test command
+changes while physically present at the appliance. The integration adds safety
+checks where the device exposes the required state, but users remain responsible
+for safe operation.
 
 ## Notes
 

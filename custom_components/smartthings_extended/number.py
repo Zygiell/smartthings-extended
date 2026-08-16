@@ -12,6 +12,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from . import DOMAIN, OvenController
+from .microwave import MicrowaveController, async_get_microwave_controller
 
 
 async def async_setup_platform(
@@ -20,24 +21,33 @@ async def async_setup_platform(
     async_add_entities: AddEntitiesCallback,
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
-    """Set up oven prepared-setting numbers."""
-    controller: OvenController = hass.data[DOMAIN]["oven"]
-    async_add_entities(
-        [
-            OvenTemperatureNumber(
-                controller, "upper", "Piekarnik górny — temperatura"
-            ),
-            OvenTimeNumber(
-                controller, "upper", "Piekarnik górny — czas"
-            ),
-            OvenTemperatureNumber(
-                controller, "lower", "Piekarnik dolny — temperatura"
-            ),
-            OvenTimeNumber(
-                controller, "lower", "Piekarnik dolny — czas"
-            ),
-        ]
-    )
+    """Set up prepared-setting numbers."""
+    entities: list[NumberEntity] = []
+
+    oven = hass.data[DOMAIN].get("oven")
+    if isinstance(oven, OvenController):
+        entities.extend(
+            [
+                OvenTemperatureNumber(
+                    oven, "upper", "Piekarnik górny — temperatura"
+                ),
+                OvenTimeNumber(
+                    oven, "upper", "Piekarnik górny — czas"
+                ),
+                OvenTemperatureNumber(
+                    oven, "lower", "Piekarnik dolny — temperatura"
+                ),
+                OvenTimeNumber(
+                    oven, "lower", "Piekarnik dolny — czas"
+                ),
+            ]
+        )
+
+    microwave = await async_get_microwave_controller(hass)
+    if microwave is not None:
+        entities.append(MicrowaveTimeNumber(microwave))
+
+    async_add_entities(entities)
 
 
 class OvenBaseNumber(NumberEntity):
@@ -116,3 +126,46 @@ class OvenTimeNumber(OvenBaseNumber):
 
     async def async_set_native_value(self, value: float) -> None:
         self.controller.set_time_minutes(self.cavity, value)
+
+
+class MicrowaveTimeNumber(NumberEntity):
+    """Prepared microwave operation time in seconds."""
+
+    _attr_should_poll = False
+    _attr_name = "Mikrofalówka — czas"
+    _attr_icon = "mdi:timer-outline"
+    _attr_device_class = NumberDeviceClass.DURATION
+    _attr_native_unit_of_measurement = UnitOfTime.SECONDS
+
+    def __init__(self, controller: MicrowaveController) -> None:
+        self.controller = controller
+        self._attr_unique_id = (
+            f"smartthings_extended_{controller.device_id}_microwave_time"
+        )
+
+    @property
+    def available(self) -> bool:
+        return self.controller.has_operation_time()
+
+    @property
+    def native_value(self) -> float:
+        return float(self.controller.time_seconds)
+
+    @property
+    def native_min_value(self) -> float:
+        return float(self.controller.time_limits()[0])
+
+    @property
+    def native_max_value(self) -> float:
+        return float(self.controller.time_limits()[1])
+
+    @property
+    def native_step(self) -> float:
+        return float(self.controller.time_limits()[2])
+
+    async def async_set_native_value(self, value: float) -> None:
+        self.controller.set_time_seconds(value)
+
+    async def async_added_to_hass(self) -> None:
+        remove = self.controller.add_listener(self.async_write_ha_state)
+        self.async_on_remove(remove)

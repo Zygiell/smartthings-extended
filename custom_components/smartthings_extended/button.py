@@ -10,6 +10,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from . import DOMAIN, OvenController
+from .microwave import MicrowaveController, async_get_microwave_controller
 
 
 async def async_setup_platform(
@@ -18,44 +19,80 @@ async def async_setup_platform(
     async_add_entities: AddEntitiesCallback,
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
-    """Set up oven command buttons."""
-    controller: OvenController = hass.data[DOMAIN]["oven"]
+    """Set up appliance command buttons."""
     entities: list[ButtonEntity] = []
 
-    for cavity, label in (("upper", "górny"), ("lower", "dolny")):
+    oven = hass.data[DOMAIN].get("oven")
+    if isinstance(oven, OvenController):
+        for cavity, label in (("upper", "górny"), ("lower", "dolny")):
+            entities.extend(
+                [
+                    OvenButton(
+                        oven,
+                        cavity,
+                        f"Piekarnik {label} — wyślij ustawienia",
+                        "send_settings",
+                        "mdi:send",
+                        oven.send_settings,
+                    ),
+                    OvenButton(
+                        oven,
+                        cavity,
+                        f"Piekarnik {label} — start",
+                        "start",
+                        "mdi:play",
+                        oven.start,
+                    ),
+                    OvenButton(
+                        oven,
+                        cavity,
+                        f"Piekarnik {label} — pauza",
+                        "pause",
+                        "mdi:pause",
+                        oven.pause,
+                    ),
+                    OvenButton(
+                        oven,
+                        cavity,
+                        f"Piekarnik {label} — stop",
+                        "stop",
+                        "mdi:stop",
+                        oven.stop,
+                    ),
+                ]
+            )
+
+    microwave = await async_get_microwave_controller(hass)
+    if microwave is not None:
         entities.extend(
             [
-                OvenButton(
-                    controller,
-                    cavity,
-                    f"Piekarnik {label} — wyślij ustawienia",
+                MicrowaveButton(
+                    microwave,
+                    "Mikrofalówka — wyślij ustawienia",
                     "send_settings",
                     "mdi:send",
-                    controller.send_settings,
+                    microwave.send_settings,
                 ),
-                OvenButton(
-                    controller,
-                    cavity,
-                    f"Piekarnik {label} — start",
+                MicrowaveButton(
+                    microwave,
+                    "Mikrofalówka — start",
                     "start",
                     "mdi:play",
-                    controller.start,
+                    microwave.start,
                 ),
-                OvenButton(
-                    controller,
-                    cavity,
-                    f"Piekarnik {label} — pauza",
+                MicrowaveButton(
+                    microwave,
+                    "Mikrofalówka — pauza",
                     "pause",
                     "mdi:pause",
-                    controller.pause,
+                    microwave.pause,
                 ),
-                OvenButton(
-                    controller,
-                    cavity,
-                    f"Piekarnik {label} — stop",
+                MicrowaveButton(
+                    microwave,
+                    "Mikrofalówka — stop",
                     "stop",
                     "mdi:stop",
-                    controller.stop,
+                    microwave.stop,
                 ),
             ]
         )
@@ -88,3 +125,28 @@ class OvenButton(ButtonEntity):
 
     async def async_press(self) -> None:
         await self._action(self.cavity)
+
+
+class MicrowaveButton(ButtonEntity):
+    """Stateless microwave command button."""
+
+    _attr_should_poll = False
+
+    def __init__(
+        self,
+        controller: MicrowaveController,
+        name: str,
+        suffix: str,
+        icon: str,
+        action: Callable[[], Awaitable[None]],
+    ) -> None:
+        self.controller = controller
+        self._action = action
+        self._attr_name = name
+        self._attr_icon = icon
+        self._attr_unique_id = (
+            f"smartthings_extended_{controller.device_id}_microwave_{suffix}"
+        )
+
+    async def async_press(self) -> None:
+        await self._action()

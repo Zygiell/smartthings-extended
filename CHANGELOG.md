@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0
+
+- Added Samsung microwave auto-detection using `kitchenModeSpecification.single`.
+- Added microwave mode and power selectors.
+- Added microwave operation time with 10-second resolution where advertised by the device.
+- Added Send settings, Start, Pause and Stop buttons for the microwave.
+- Added a door-state safety check before microwave Start when the device reports door state.
+- Mode-specific controls become unavailable when the selected mode does not support them.
+
 ## 0.2.1
 
 - Added HACS-ready repository structure.
