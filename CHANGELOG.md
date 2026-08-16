@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.4
+
+- Added verified friendly washer cycle names for the tested Samsung `Table_02` cycle reference table.
+- The washer program selector now shows names such as `Eco 40-60`, `AI Wash`, `Bawełna`, `Higieniczna para`, `Czyszczenie bębna+` and the other programs visible in SmartThings instead of `Program XX` codes.
+- Raw Samsung cycle IDs are still kept internally and used for commands.
+- Unknown reference tables or unmapped future cycle IDs safely fall back to `Program <code>`.
+
 ## 0.8.3
 
 - Changed Samsung oven prepared settings to send mode, temperature and operation time in one SmartThings device-command batch.
