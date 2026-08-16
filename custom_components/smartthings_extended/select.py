@@ -10,6 +10,7 @@ from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from . import DOMAIN, OvenController
 from .dishwasher import DishwasherController, async_get_dishwasher_controller
 from .fridge import FridgeController, async_get_fridge_controller
+from .linked_device import smartthings_device_info
 from .microwave import MicrowaveController, async_get_microwave_controller
 from .washer import WasherController, async_get_washer_controller
 
@@ -92,6 +93,7 @@ class OvenModeSelect(SelectEntity):
         self._attr_unique_id = (
             f"smartthings_extended_{controller.device_id}_{cavity}_mode"
         )
+        self._attr_device_info = smartthings_device_info(controller.device_id)
 
     @property
     def options(self) -> list[str]:
@@ -125,6 +127,7 @@ class MicrowaveBaseSelect(SelectEntity):
         self._attr_unique_id = (
             f"smartthings_extended_{controller.device_id}_microwave_{suffix}"
         )
+        self._attr_device_info = smartthings_device_info(controller.device_id)
 
     async def async_added_to_hass(self) -> None:
         remove = self.controller.add_listener(self.async_write_ha_state)
@@ -190,6 +193,7 @@ class WasherBaseSelect(SelectEntity):
         self._attr_unique_id = (
             f"smartthings_extended_{controller.device_id}_washer_{suffix}"
         )
+        self._attr_device_info = smartthings_device_info(controller.device_id)
 
     async def async_added_to_hass(self) -> None:
         remove = self.controller.add_listener(self.async_write_ha_state)
@@ -337,6 +341,7 @@ class DishwasherBaseSelect(SelectEntity):
         self._attr_unique_id = (
             f"smartthings_extended_{controller.device_id}_dishwasher_{suffix}"
         )
+        self._attr_device_info = smartthings_device_info(controller.device_id)
 
     async def async_added_to_hass(self) -> None:
         remove = self.controller.add_listener(self.async_write_ha_state)
@@ -461,6 +466,7 @@ class FridgeBaseSelect(SelectEntity):
         self._attr_unique_id = (
             f"smartthings_extended_{controller.device_id}_fridge_{suffix}"
         )
+        self._attr_device_info = smartthings_device_info(controller.device_id)
 
     async def async_added_to_hass(self) -> None:
         remove = self.controller.add_listener(self.async_write_ha_state)
