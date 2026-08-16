@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.2
+
+- Fixed Samsung microwave prepared settings by sending mode, power and operation time in a single SmartThings device-command batch.
+- This preserves the advertised microwave power control while avoiding `METHOD_NOT_ALLOWED` returned when `samsungce.microwavePower.setPowerLevel` is sent alone on the tested appliance.
+- Changed washer Start, Pause, Resume and Cancel to use the live `washerOperatingState.setMachineState` capability (`run`, `pause`, `stop`) instead of the proposed `samsungce.washerOperatingState` command set.
+- Washer Start still checks Smart Control before applying prepared settings and starting.
+
 ## 0.8.1
 
 - Fixed device/area association on Home Assistant 2026.8 and newer.
@@ -78,11 +85,3 @@
 ## 0.2.0
 
 - Added dual-cavity Samsung oven controls.
-- Added dynamic mode, temperature and time preparation entities.
-- Added Send settings, Start, Pause and Stop buttons per cavity.
-- Start checks Smart Control before sending the start command.
-
-## 0.1.0
-
-- Initial generic SmartThings command service using the OAuth client from
-  Home Assistant's official SmartThings integration.
