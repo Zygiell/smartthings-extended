@@ -8,7 +8,7 @@ does not currently expose as native entities.
 > from Home Assistant's official `smartthings` integration. It does not store
 > a separate SmartThings PAT.
 
-## Current support — v0.5.0
+## Current support — v0.6.0
 
 ### Samsung dual-cavity oven
 
@@ -109,6 +109,26 @@ is pressed.
 Dishwasher `Start` checks `remoteControlStatus.remoteControlEnabled` first and
 refuses to start when remote control is disabled.
 
+### Samsung refrigerator
+
+The refrigerator extension intentionally does not duplicate controls that the
+official SmartThings integration already exposes, such as compartment
+temperatures, Power Cool, Power Freeze and the main ice-maker switches.
+
+For compatible refrigerators with a `cvroom` CoolSelect+ component it adds:
+
+- CoolSelect+ mode selection using the modes advertised by the appliance
+- AutoFill Pitcher on/off
+- ice-maker Night Mode on/off
+- refrigerator Night Light on/off
+- Night Light brightness selection
+- door-alarm sound selection
+
+These refrigerator controls are direct controls: changing an entity immediately
+sends the corresponding SmartThings command. The current Night Mode schedule is
+read by the controller but schedule editing is intentionally deferred until a
+proper time-based Home Assistant UI is added.
+
 ### Generic command service
 
 The integration also exposes:
@@ -150,9 +170,10 @@ Restart Home Assistant after changing YAML configuration.
 ## Safety
 
 Oven, microwave, washer and dishwasher controls can operate real appliances.
-Test command changes while physically present at the appliance. The integration
-adds safety checks where the device exposes the required state, but users remain
-responsible for safe operation.
+Test command changes while physically present at the appliance. Refrigerator
+controls can immediately alter operating modes or convenience features. The
+integration adds safety checks where the device exposes the required state, but
+users remain responsible for safe operation.
 
 ## Notes
 

@@ -26,7 +26,7 @@ SMARTTHINGS_DOMAIN = "smartthings"
 SERVICE_SEND_COMMAND = "send_command"
 CONF_OVEN_DEVICE_ID = "oven_device_id"
 
-PLATFORMS = [Platform.SELECT, Platform.NUMBER, Platform.BUTTON]
+PLATFORMS = [Platform.SELECT, Platform.NUMBER, Platform.BUTTON, Platform.SWITCH]
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -127,7 +127,7 @@ async def _auto_find_oven(hass: HomeAssistant) -> tuple[Any, str, dict[str, Any]
             specification = capability.get("specification", {}).get("value")
 
             # Some Samsung kitchen appliances (for example microwaves) also
-            # expose kitchenModeSpecification.  The oven supported by this
+            # expose kitchenModeSpecification. The oven supported by this
             # release is identified by separate upper/lower cavity specs.
             if (
                 isinstance(specification, dict)

@@ -9,6 +9,7 @@ from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from . import DOMAIN, OvenController
 from .dishwasher import DishwasherController, async_get_dishwasher_controller
+from .fridge import FridgeController, async_get_fridge_controller
 from .microwave import MicrowaveController, async_get_microwave_controller
 from .washer import WasherController, async_get_washer_controller
 
@@ -60,6 +61,16 @@ async def async_setup_platform(
                 DishwasherZoneSelect(dishwasher),
                 DishwasherSpeedBoosterSelect(dishwasher),
                 DishwasherSanitizeSelect(dishwasher),
+            ]
+        )
+
+    fridge = await async_get_fridge_controller(hass)
+    if fridge is not None:
+        entities.extend(
+            [
+                FridgeCoolSelectModeSelect(fridge),
+                FridgeNightLightBrightnessSelect(fridge),
+                FridgeDoorAlarmSoundSelect(fridge),
             ]
         )
 
@@ -438,3 +449,102 @@ class DishwasherSanitizeSelect(DishwasherBaseSelect):
 
     async def async_select_option(self, option: str) -> None:
         self.controller.set_sanitize(self.controller.bool_from_label(option))
+
+
+class FridgeBaseSelect(SelectEntity):
+    """Base select for refrigerator controls."""
+
+    _attr_should_poll = False
+
+    def __init__(self, controller: FridgeController, suffix: str) -> None:
+        self.controller = controller
+        self._attr_unique_id = (
+            f"smartthings_extended_{controller.device_id}_fridge_{suffix}"
+        )
+
+    async def async_added_to_hass(self) -> None:
+        remove = self.controller.add_listener(self.async_write_ha_state)
+        self.async_on_remove(remove)
+
+
+class FridgeCoolSelectModeSelect(FridgeBaseSelect):
+    _attr_name = "Lodówka — CoolSelect+"
+    _attr_icon = "mdi:fridge-bottom"
+
+    def __init__(self, controller: FridgeController) -> None:
+        super().__init__(controller, "coolselect_mode")
+
+    @property
+    def options(self) -> list[str]:
+        return [
+            self.controller.coolselect_label(value)
+            for value in self.controller.coolselect_modes
+        ]
+
+    @property
+    def current_option(self) -> str:
+        return self.controller.coolselect_label(self.controller.coolselect_mode)
+
+    async def async_select_option(self, option: str) -> None:
+        value = self.controller.coolselect_from_label(option)
+        await self.controller.set_coolselect_mode(value)
+
+
+class FridgeNightLightBrightnessSelect(FridgeBaseSelect):
+    _attr_name = "Lodówka — jasność lampki nocnej"
+    _attr_icon = "mdi:brightness-6"
+
+    def __init__(self, controller: FridgeController) -> None:
+        super().__init__(controller, "night_light_brightness")
+
+    @property
+    def available(self) -> bool:
+        return bool(self.controller.night_light_brightness_levels)
+
+    @property
+    def options(self) -> list[str]:
+        return [
+            self.controller.brightness_label(value)
+            for value in self.controller.night_light_brightness_levels
+        ]
+
+    @property
+    def current_option(self) -> str | None:
+        if not self.controller.night_light_brightness:
+            return None
+        return self.controller.brightness_label(
+            self.controller.night_light_brightness
+        )
+
+    async def async_select_option(self, option: str) -> None:
+        value = self.controller.brightness_from_label(option)
+        await self.controller.set_night_light_brightness(value)
+
+
+class FridgeDoorAlarmSoundSelect(FridgeBaseSelect):
+    _attr_name = "Lodówka — dźwięk alarmu drzwi"
+    _attr_icon = "mdi:bell-ring"
+
+    def __init__(self, controller: FridgeController) -> None:
+        super().__init__(controller, "door_alarm_sound")
+
+    @property
+    def available(self) -> bool:
+        return bool(self.controller.alarm_sounds)
+
+    @property
+    def options(self) -> list[str]:
+        return [
+            self.controller.alarm_sound_label(value)
+            for value in self.controller.alarm_sounds
+        ]
+
+    @property
+    def current_option(self) -> str | None:
+        if not self.controller.alarm_sounds:
+            return None
+        return self.controller.alarm_sound_label(self.controller.alarm_sound)
+
+    async def async_select_option(self, option: str) -> None:
+        value = self.controller.alarm_sound_from_label(option)
+        await self.controller.set_alarm_sound(value)
