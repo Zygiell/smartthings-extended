@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0
+
+- Added Samsung dishwasher auto-detection using `samsungce.dishwasherWashingCourse.supportedCourses`.
+- Added local washing-course selection with friendly labels for the tested dishwasher courses.
+- Added dynamic selected-zone, Speed Booster and Sanitize controls based on each course's advertised options.
+- Added Send settings, Start, Pause, Resume, Cancel and Cancel-and-drain buttons.
+- Dishwasher Start checks Smart Control before sending the start command.
+- Prepared settings remain local until Send settings or Start is pressed.
+
 ## 0.4.0
 
 - Added Samsung washer auto-detection using `samsungce.washerCycle.supportedCycles`.
