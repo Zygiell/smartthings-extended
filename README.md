@@ -8,7 +8,7 @@ does not currently expose as native entities.
 > from Home Assistant's official `smartthings` integration. It does not store
 > a separate SmartThings PAT.
 
-## Current support — v0.4.0
+## Current support — v0.5.0
 
 ### Samsung dual-cavity oven
 
@@ -82,6 +82,33 @@ cycle-name mapping can be added separately without changing the control model.
 Washer `Start` checks `remoteControlStatus.remoteControlEnabled` first and
 refuses to start when Smart Control is disabled.
 
+### Samsung dishwasher
+
+The dishwasher is auto-detected from
+`samsungce.dishwasherWashingCourse.supportedCourses`. Course-specific option
+availability and defaults are read from
+`samsungce.dishwasherWashingCourseDetails.predefinedCourses`.
+
+The integration exposes:
+
+- washing course
+- selected wash zone when supported by the selected course
+- Speed Booster when supported by the selected course
+- Sanitize when supported by the selected course
+- Send settings
+- Start
+- Pause
+- Resume
+- Cancel
+- Cancel and drain
+
+Changing the prepared course immediately recalculates the local option lists
+and defaults. No dishwasher command is sent until **Send settings** or **Start**
+is pressed.
+
+Dishwasher `Start` checks `remoteControlStatus.remoteControlEnabled` first and
+refuses to start when remote control is disabled.
+
 ### Generic command service
 
 The integration also exposes:
@@ -122,10 +149,10 @@ Restart Home Assistant after changing YAML configuration.
 
 ## Safety
 
-Oven, microwave and washer controls can operate real appliances. Test command
-changes while physically present at the appliance. The integration adds safety
-checks where the device exposes the required state, but users remain responsible
-for safe operation.
+Oven, microwave, washer and dishwasher controls can operate real appliances.
+Test command changes while physically present at the appliance. The integration
+adds safety checks where the device exposes the required state, but users remain
+responsible for safe operation.
 
 ## Notes
 
