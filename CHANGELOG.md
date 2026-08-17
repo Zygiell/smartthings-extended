@@ -49,8 +49,8 @@
 - Added Start, Pause, Resume and Cancel controls for each burner timer.
 - Added child-lock control using `samsungce.kidsLockControl`.
 - Added SmartThings device-event tracking for burner, residual-heat, timer and lock state.
-- Kept burner names generic (`Pole 1…6`) because the device does not advertise physical burner positions.
-- Intentionally did not expose burner power or heating-mode writes: the tested `samsungce.cooktopHeatingPower` capability publishes attributes but advertises **no commands**. SmartThings Extended therefore does not expose remote burner-power or heating-mode controls and does not attempt undocumented commands.
+- Kept burner names generic (`Pole 1…6`) because the appliance does not advertise physical burner positions.
+- Intentionally did not expose burner power or heating-mode writes: the tested `samsungce.cooktopHeatingPower` capability publishes attributes but no commands.
 - Avoided duplicating the official SmartThings read-only burner level/mode entities.
 
 ## 0.6.0
