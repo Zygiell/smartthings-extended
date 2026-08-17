@@ -148,14 +148,6 @@ class FridgeController:
             else (self.alarm_sounds[0] if self.alarm_sounds else 0)
         )
 
-        # The doorAlarm attribute is advertised with on/off commands but this
-        # refrigerator reports its current value as null until it changes.
-        door_alarm_value = alarm.get("doorAlarm", {}).get("value")
-        self.door_alarm_supported = bool(alarm)
-        self.door_alarm: bool | None = (
-            door_alarm_value == "on" if door_alarm_value in ("on", "off") else None
-        )
-
         add_listener = getattr(client, "add_device_event_listener", None)
         if callable(add_listener):
             self._remove_device_listener = add_listener(
@@ -256,11 +248,6 @@ class FridgeController:
             ):
                 self.alarm_sound = value
                 changed = True
-            elif attribute == "doorAlarm" and value in ("on", "off"):
-                enabled = value == "on"
-                if enabled != self.door_alarm:
-                    self.door_alarm = enabled
-                    changed = True
 
         if changed:
             self._notify()
@@ -408,17 +395,6 @@ class FridgeController:
             value,
         )
         self.alarm_sound = value
-        self._notify()
-
-    async def set_door_alarm(self, enabled: bool) -> None:
-        if not self.door_alarm_supported:
-            raise HomeAssistantError("Alarm drzwi nie jest dostępny.")
-        await self._command(
-            "main",
-            "samsungce.doorAlarm",
-            "on" if enabled else "off",
-        )
-        self.door_alarm = enabled
         self._notify()
 
     async def set_icemaker_night_schedule(self, start: str, end: str) -> None:

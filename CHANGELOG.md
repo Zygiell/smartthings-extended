@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.7
+
+- Removed the refrigerator door-alarm on/off switch. On-site testing confirmed the tested appliance ignores the advertised `samsungce.doorAlarm` `on`/`off` commands and never reports the `doorAlarm` attribute or related events.
+- Diagnostics comparison identified the SmartThings app's refrigerator sound toggle as `samsungce.audioVolumeLevel` (`volumeLevel` 0–1). Exposing it was intentionally skipped for now; the finding is documented in TODO.md in case the control is wanted later.
+- The remaining v0.8.6 refrigerator controls were physically verified: interior-lighting brightness, gradual brightening and ice-maker Night Mode schedule editing.
+
 ## 0.8.6
 
 - Added a refrigerator interior-lighting brightness selector mapped to the `brightnessLevel` attribute. The existing brightness entity keeps controlling the separate night-light brightness, which explains why its changes were not visible next to the SmartThings app's main brightness setting.

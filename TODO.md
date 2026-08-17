@@ -1,14 +1,12 @@
 # TODO
 
-## Refrigerator — physical verification of v0.8.6 controls
+## Refrigerator — verified state
 
-The v0.8.5 refrigerator diagnostics captured the appliance's advertised capability schemas, and v0.8.6 implemented the remaining schema-confirmed controls: interior-lighting brightness, gradual brightening, the door-alarm master on/off switch and ice-maker Night Mode schedule editing.
+All Extended refrigerator controls were physically verified on site after v0.8.6: CoolSelect+, AutoFill, ice-maker Night Mode with schedule editing, Night Light, night-light and interior-lighting brightness, gradual brightening and door-alarm sound selection, all with live SmartThings event sync.
 
-Still pending an on-site test session:
+The v0.8.6 door-alarm on/off switch was removed in v0.8.7: the tested appliance ignores the advertised `samsungce.doorAlarm` `on`/`off` commands and never reports the `doorAlarm` attribute.
 
-- verify the new interior-lighting brightness selector matches the brightness setting shown in the SmartThings app (the previous confusion was caused by the separate night-light brightness attribute);
-- verify the door-alarm on/off switch; the appliance reports the `doorAlarm` attribute as `null` until it first changes, so the switch may start in an unknown state;
-- verify Night Mode schedule editing end to end (set start/end in Home Assistant, confirm in the SmartThings app and on the appliance).
+Deferred by choice — refrigerator sound toggle: diagnostics comparison identified the SmartThings app's sound on/off toggle as `samsungce.audioVolumeLevel` on the `main` component (`volumeLevel` 0–1, `volumeLevelRange` {0, 1, step 1}; the capability is not listed in `custom.disabledCapabilities`). If this control is ever wanted, first fetch the capability schema (`GET /v1/capabilities/samsungce.audioVolumeLevel/1`) to confirm the setter command name — do not guess it.
 
 The general rule stands: do not guess private `samsungce.*` command names; implement only commands advertised by the appliance's capability schemas.
 

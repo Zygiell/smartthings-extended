@@ -8,7 +8,7 @@ does not currently expose as native entities.
 > from Home Assistant's official `smartthings` integration. It does not store
 > a separate SmartThings PAT.
 
-## Current support — v0.8.6
+## Current support — v0.8.7
 
 ### Device registry integration
 
@@ -144,7 +144,7 @@ For compatible refrigerators with a `cvroom` CoolSelect+ component it adds:
 - interior-lighting brightness selection
 - Night Light brightness selection
 - gradual-brightening on/off
-- door-alarm master on/off and alarm-sound selection
+- door-alarm sound selection
 
 These refrigerator controls are direct controls: changing an entity immediately
 sends the corresponding SmartThings command, and live SmartThings device events
