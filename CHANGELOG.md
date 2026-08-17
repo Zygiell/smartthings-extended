@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.5
+
+- Added live SmartThings event tracking for all existing refrigerator Extended controls: CoolSelect+, AutoFill Pitcher, ice-maker Night Mode, Night Light, Night Light brightness and door-alarm sound.
+- Changes made on the refrigerator itself or in the SmartThings app now update the corresponding SmartThings Extended entities without restarting Home Assistant.
+- Night Mode `startTime`, `endTime` and `timeSettingSupported` are also kept current internally when SmartThings publishes those events.
+- Added focused SmartThings Extended diagnostics for the refrigerator's private Samsung capabilities so missing controls can be implemented from the appliance's advertised schema instead of guessing commands.
+
 ## 0.8.4
 
 - Added verified friendly washer cycle names for the tested Samsung `Table_02` cycle reference table.
@@ -39,7 +46,7 @@
 
 - Added Samsung cooktop auto-detection using `burner-*` components.
 - Added one locally prepared countdown-timer value per burner.
-- Added Start, Pause, Resume and Cancel controls for each burner timer.
+- Added Start / Pause / Resume / Cancel controls for each burner timer.
 - Added child-lock control using `samsungce.kidsLockControl`.
 - Added SmartThings device-event tracking for burner, residual-heat, timer and lock state.
 - Kept burner names generic (`Pole 1…6`) because the appliance does not advertise physical burner positions.
@@ -64,7 +71,7 @@
 - Added local washing-course selection with friendly labels for the tested dishwasher courses.
 - Added dynamic selected-zone, Speed Booster and Sanitize controls based on each course's advertised options.
 - Added Send settings, Start, Pause, Resume, Cancel and Cancel-and-drain buttons.
-- Dishwasher Start checks Smart Control before sending the start command.
+- Dishwasher Start checks `remoteControlStatus.remoteControlEnabled` before sending the start command.
 - Prepared settings remain local until Send settings or Start is pressed.
 
 ## 0.4.0
