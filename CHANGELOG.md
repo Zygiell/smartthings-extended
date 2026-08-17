@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.5
+
+- Added live SmartThings event tracking for all existing refrigerator Extended controls: CoolSelect+, AutoFill Pitcher, ice-maker Night Mode, Night Light, Night Light brightness and door-alarm sound.
+- Changes made on the refrigerator itself or in the SmartThings app now update the corresponding SmartThings Extended entities without restarting Home Assistant.
+- Night Mode `startTime`, `endTime` and `timeSettingSupported` are also kept current internally when SmartThings publishes those events.
+- Added focused SmartThings Extended diagnostics for the refrigerator's private Samsung capabilities so missing controls can be implemented from the appliance's advertised schema instead of guessing commands.
+
 ## 0.8.4
 
 - Added verified friendly washer cycle names for the tested Samsung `Table_02` cycle reference table.

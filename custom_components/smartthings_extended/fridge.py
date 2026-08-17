@@ -39,6 +39,7 @@ class FridgeController:
         self.client = client
         self.device_id = device_id
         self._listeners: list[Callable[[], None]] = []
+        self._remove_device_listener: Callable[[], None] | None = None
 
         components = raw_status.get("components", {})
         main = components.get("main", {})
@@ -121,8 +122,14 @@ class FridgeController:
             else (self.alarm_sounds[0] if self.alarm_sounds else 0)
         )
 
+        add_listener = getattr(client, "add_device_event_listener", None)
+        if callable(add_listener):
+            self._remove_device_listener = add_listener(
+                device_id, self._handle_device_event
+            )
+
     def add_listener(self, listener: Callable[[], None]) -> Callable[[], None]:
-        """Subscribe to local state changes after successful commands."""
+        """Subscribe to local and SmartThings state changes."""
         self._listeners.append(listener)
 
         def remove() -> None:
@@ -134,6 +141,77 @@ class FridgeController:
     def _notify(self) -> None:
         for listener in list(self._listeners):
             listener()
+
+    def _handle_device_event(self, event: Any) -> None:  # noqa: PLR0912
+        """Update extended refrigerator state from live SmartThings events."""
+        component = str(getattr(event, "component_id", ""))
+        capability = str(getattr(event, "capability", ""))
+        attribute = str(getattr(event, "attribute", ""))
+        value = getattr(event, "value", None)
+        changed = False
+
+        if component == COOLSELECT_COMPONENT and capability == "custom.fridgeMode":
+            if (
+                attribute == "fridgeMode"
+                and isinstance(value, str)
+                and value in self.coolselect_modes
+                and value != self.coolselect_mode
+            ):
+                self.coolselect_mode = value
+                changed = True
+
+        elif component == "main" and capability == "samsungce.autoFillPitcher":
+            if attribute == "autoFillPitcher" and value in ("on", "off"):
+                enabled = value == "on"
+                if enabled != self.auto_fill:
+                    self.auto_fill = enabled
+                    changed = True
+
+        elif component == "main" and capability == "samsungce.icemakerNightMode":
+            if attribute == "icemakerNightMode" and value in ("on", "off"):
+                enabled = value == "on"
+                if enabled != self.icemaker_night_mode:
+                    self.icemaker_night_mode = enabled
+                    changed = True
+            elif attribute == "startTime" and value != self.icemaker_night_start:
+                self.icemaker_night_start = value
+                changed = True
+            elif attribute == "endTime" and value != self.icemaker_night_end:
+                self.icemaker_night_end = value
+                changed = True
+            elif attribute == "timeSettingSupported":
+                supported = bool(value)
+                if supported != self.icemaker_time_setting_supported:
+                    self.icemaker_time_setting_supported = supported
+                    changed = True
+
+        elif component == "main" and capability == "samsungce.fridgeInteriorLighting":
+            if attribute == "nightLight" and value in ("on", "off"):
+                enabled = value == "on"
+                if enabled != self.night_light:
+                    self.night_light = enabled
+                    changed = True
+            elif (
+                attribute == "nightLightBrightnessLevel"
+                and isinstance(value, str)
+                and value in self.night_light_brightness_levels
+                and value != self.night_light_brightness
+            ):
+                self.night_light_brightness = value
+                changed = True
+
+        elif component == "main" and capability == "samsungce.doorAlarm":
+            if (
+                attribute == "alarmSound"
+                and isinstance(value, int)
+                and value in self.alarm_sounds
+                and value != self.alarm_sound
+            ):
+                self.alarm_sound = value
+                changed = True
+
+        if changed:
+            self._notify()
 
     async def _command(
         self,
