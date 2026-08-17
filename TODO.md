@@ -1,5 +1,14 @@
 # TODO
 
+## Refrigerator — remaining SmartThings controls
+
+v0.8.5 adds live SmartThings event tracking for the existing Extended refrigerator entities. The following SmartThings-app features still need schema-confirmed write support before they are exposed:
+
+- door alarm master on/off switch in addition to the existing alarm-sound selector;
+- ice-maker Night Mode schedule editing (`startTime` / `endTime`) when `timeSettingSupported` is true.
+
+Do not guess private `samsungce.*` command names. Use the focused SmartThings Extended diagnostics added in v0.8.5 to capture the appliance's raw capability status and schemas, then implement only the commands actually advertised by this refrigerator.
+
 ## Dishwasher — deferred physical verification
 
 The Samsung dishwasher backend is intentionally left as **not physically verified** for now. Do not treat the current lifecycle/settings implementation as production-confirmed until another on-site test session.
