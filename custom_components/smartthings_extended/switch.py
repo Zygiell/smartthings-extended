@@ -63,15 +63,6 @@ async def async_setup_platform(
                     fridge.set_brighten_gradually,
                     lambda: fridge.brighten_gradually_supported,
                 ),
-                FridgeBooleanSwitch(
-                    fridge,
-                    "Lodówka — alarm drzwi",
-                    "door_alarm",
-                    "mdi:bell-alert",
-                    lambda: fridge.door_alarm,
-                    fridge.set_door_alarm,
-                    lambda: fridge.door_alarm_supported,
-                ),
             ]
         )
 
@@ -93,7 +84,7 @@ class FridgeBooleanSwitch(SwitchEntity):
         name: str,
         suffix: str,
         icon: str,
-        state_getter: Callable[[], bool | None],
+        state_getter: Callable[[], bool],
         state_setter: Callable[[bool], Awaitable[None]],
         availability_getter: Callable[[], bool],
     ) -> None:
@@ -113,7 +104,7 @@ class FridgeBooleanSwitch(SwitchEntity):
         return self._availability_getter()
 
     @property
-    def is_on(self) -> bool | None:
+    def is_on(self) -> bool:
         return self._state_getter()
 
     async def async_turn_on(self, **kwargs: Any) -> None:
