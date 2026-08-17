@@ -46,7 +46,7 @@
 
 - Added Samsung cooktop auto-detection using `burner-*` components.
 - Added one locally prepared countdown-timer value per burner.
-- Added Start / Pause / Resume / Cancel controls for each burner timer.
+- Added Start, Pause, Resume and Cancel controls for each burner timer.
 - Added child-lock control using `samsungce.kidsLockControl`.
 - Added SmartThings device-event tracking for burner, residual-heat, timer and lock state.
 - Kept burner names generic (`Pole 1…6`) because the appliance does not advertise physical burner positions.
@@ -71,19 +71,30 @@
 - Added local washing-course selection with friendly labels for the tested dishwasher courses.
 - Added dynamic selected-zone, Speed Booster and Sanitize controls based on each course's advertised options.
 - Added Send settings, Start, Pause, Resume, Cancel and Cancel-and-drain buttons.
-- Dishwasher Start checks `remoteControlStatus.remoteControlEnabled` before sending the start command.
+- Dishwasher Start checks Smart Control before sending the start command.
 - Prepared settings remain local until Send settings or Start is pressed.
 
 ## 0.4.0
 
-- Added Samsung washer auto-detection using `samsungce.washerCycle.supportedCycles`.
-- Added local prepared wash-program selection.
-- Added dynamic water-temperature, spin-level and rinse-count selectors based on the selected program's advertised options.
-- Added Bubble Soak control when supported by the selected program.
-- Added Send settings, Start, Pause, Resume and Cancel buttons.
-- Washer Start checks Smart Control before sending the start command.
-- Prepared settings remain local until Send settings or Start is pressed.
-- Cycle IDs are exposed as `Program XX` until localized SmartThings cycle names are mapped.
+- Added Samsung washer auto-detection using `samsungce.washerCycle.supportedCycles` and uses each cycle's advertised `supportedOptions` to build local preparation controls dynamically.
+- The integration exposes:
+
+- wash program
+- water temperature when supported by the selected program
+- spin level when supported by the selected program
+- rinse count when supported by the selected program
+- Bubble Soak when supported by the selected program
+- Send settings
+- Start
+- Pause
+- Resume
+- Cancel
+
+Changing the prepared program immediately recalculates the local option lists and defaults. No washer command is sent until **Send settings** or **Start** is pressed.
+
+Program IDs are currently exposed as `Program XX` because the appliance status provides cycle identifiers but not localized SmartThings display names. Friendly cycle-name mapping can be added separately without changing the control model.
+
+Washer `Start` checks `remoteControlStatus.remoteControlEnabled` first and refuses to start when Smart Control is disabled.
 
 ## 0.3.0
 
