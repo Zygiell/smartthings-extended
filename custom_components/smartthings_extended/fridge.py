@@ -108,6 +108,32 @@ class FridgeController:
             )
         )
 
+        interior_brightness_values = lighting.get(
+            "supportedBrightnessesLevels", {}
+        ).get("value")
+        self.brightness_levels = (
+            [
+                str(value)
+                for value in interior_brightness_values
+                if isinstance(value, str)
+            ]
+            if isinstance(interior_brightness_values, list)
+            else []
+        )
+        current_interior_brightness = lighting.get("brightnessLevel", {}).get(
+            "value"
+        )
+        self.brightness_level = (
+            str(current_interior_brightness)
+            if isinstance(current_interior_brightness, str)
+            and current_interior_brightness in self.brightness_levels
+            else (self.brightness_levels[0] if self.brightness_levels else "")
+        )
+
+        brighten_value = lighting.get("brightenGradually", {}).get("value")
+        self.brighten_gradually_supported = brighten_value in ("on", "off")
+        self.brighten_gradually = brighten_value == "on"
+
         alarm = main.get("samsungce.doorAlarm", {})
         sounds = alarm.get("supportedAlarmSounds", {}).get("value")
         self.alarm_sounds = (
@@ -120,6 +146,14 @@ class FridgeController:
             int(current_sound)
             if isinstance(current_sound, int) and current_sound in self.alarm_sounds
             else (self.alarm_sounds[0] if self.alarm_sounds else 0)
+        )
+
+        # The doorAlarm attribute is advertised with on/off commands but this
+        # refrigerator reports its current value as null until it changes.
+        door_alarm_value = alarm.get("doorAlarm", {}).get("value")
+        self.door_alarm_supported = bool(alarm)
+        self.door_alarm: bool | None = (
+            door_alarm_value == "on" if door_alarm_value in ("on", "off") else None
         )
 
         add_listener = getattr(client, "add_device_event_listener", None)
@@ -199,6 +233,19 @@ class FridgeController:
             ):
                 self.night_light_brightness = value
                 changed = True
+            elif (
+                attribute == "brightnessLevel"
+                and isinstance(value, str)
+                and value in self.brightness_levels
+                and value != self.brightness_level
+            ):
+                self.brightness_level = value
+                changed = True
+            elif attribute == "brightenGradually" and value in ("on", "off"):
+                enabled = value == "on"
+                if enabled != self.brighten_gradually:
+                    self.brighten_gradually = enabled
+                    changed = True
 
         elif component == "main" and capability == "samsungce.doorAlarm":
             if (
@@ -209,6 +256,11 @@ class FridgeController:
             ):
                 self.alarm_sound = value
                 changed = True
+            elif attribute == "doorAlarm" and value in ("on", "off"):
+                enabled = value == "on"
+                if enabled != self.door_alarm:
+                    self.door_alarm = enabled
+                    changed = True
 
         if changed:
             self._notify()
@@ -290,11 +342,16 @@ class FridgeController:
     def brightness_label(self, value: str) -> str:
         return BRIGHTNESS_LABELS.get(value, value)
 
-    def brightness_from_label(self, label: str) -> str:
-        for value in self.night_light_brightness_levels:
+    def brightness_from_label(
+        self, label: str, values: list[str] | None = None
+    ) -> str:
+        candidates = (
+            values if values is not None else self.night_light_brightness_levels
+        )
+        for value in candidates:
             if self.brightness_label(value) == label:
                 return value
-        raise HomeAssistantError(f"Nieznana jasność lampki nocnej: {label}")
+        raise HomeAssistantError(f"Nieznana jasność: {label}")
 
     async def set_night_light_brightness(self, value: str) -> None:
         if value not in self.night_light_brightness_levels:
@@ -306,6 +363,30 @@ class FridgeController:
             value,
         )
         self.night_light_brightness = value
+        self._notify()
+
+    async def set_brightness_level(self, value: str) -> None:
+        if value not in self.brightness_levels:
+            raise HomeAssistantError(f"Jasność {value} nie jest obsługiwana.")
+        await self._command(
+            "main",
+            "samsungce.fridgeInteriorLighting",
+            "setBrightnessLevel",
+            value,
+        )
+        self.brightness_level = value
+        self._notify()
+
+    async def set_brighten_gradually(self, enabled: bool) -> None:
+        if not self.brighten_gradually_supported:
+            raise HomeAssistantError("Powolne rozjaśnianie nie jest dostępne.")
+        await self._command(
+            "main",
+            "samsungce.fridgeInteriorLighting",
+            "setBrightenGradually",
+            "on" if enabled else "off",
+        )
+        self.brighten_gradually = enabled
         self._notify()
 
     def alarm_sound_label(self, value: int) -> str:
@@ -327,6 +408,32 @@ class FridgeController:
             value,
         )
         self.alarm_sound = value
+        self._notify()
+
+    async def set_door_alarm(self, enabled: bool) -> None:
+        if not self.door_alarm_supported:
+            raise HomeAssistantError("Alarm drzwi nie jest dostępny.")
+        await self._command(
+            "main",
+            "samsungce.doorAlarm",
+            "on" if enabled else "off",
+        )
+        self.door_alarm = enabled
+        self._notify()
+
+    async def set_icemaker_night_schedule(self, start: str, end: str) -> None:
+        if not self.icemaker_time_setting_supported:
+            raise HomeAssistantError(
+                "Lodówka nie obsługuje ustawiania godzin trybu nocnego kostkarki."
+            )
+        await self._command(
+            "main",
+            "samsungce.icemakerNightMode",
+            "setSchedule",
+            [start, end],
+        )
+        self.icemaker_night_start = start
+        self.icemaker_night_end = end
         self._notify()
 
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.8.6
+
+- Added a refrigerator interior-lighting brightness selector mapped to the `brightnessLevel` attribute. The existing brightness entity keeps controlling the separate night-light brightness, which explains why its changes were not visible next to the SmartThings app's main brightness setting.
+- Added a refrigerator gradual-brightening switch using the advertised `setBrightenGradually` command.
+- Added a refrigerator door-alarm master on/off switch using the advertised `samsungce.doorAlarm` `on`/`off` commands. The tested appliance reports this attribute as `null` until it first changes, so the switch may start in an unknown state.
+- Added ice-maker Night Mode schedule editing through start and end time entities using the advertised `setSchedule` command. Times are shown in the local time zone and sent as the ISO-8601 UTC datetimes the appliance expects.
+- All new controls follow the capability schemas captured by the v0.8.5 refrigerator diagnostics; no undocumented commands are used.
+- The new lighting, alarm and schedule states are kept in sync with live SmartThings device events.
+
 ## 0.8.5
 
 - Added live SmartThings event tracking for all existing refrigerator Extended controls: CoolSelect+, AutoFill Pitcher, ice-maker Night Mode, Night Light, Night Light brightness and door-alarm sound.

@@ -26,7 +26,13 @@ SMARTTHINGS_DOMAIN = "smartthings"
 SERVICE_SEND_COMMAND = "send_command"
 CONF_OVEN_DEVICE_ID = "oven_device_id"
 
-PLATFORMS = [Platform.SELECT, Platform.NUMBER, Platform.BUTTON, Platform.SWITCH]
+PLATFORMS = [
+    Platform.SELECT,
+    Platform.NUMBER,
+    Platform.BUTTON,
+    Platform.SWITCH,
+    Platform.TIME,
+]
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -445,12 +451,14 @@ def _install_config_entry_platform_adapters() -> None:
     from . import number as number_platform
     from . import select as select_platform
     from . import switch as switch_platform
+    from . import time as time_platform
 
     for module in (
         select_platform,
         number_platform,
         button_platform,
         switch_platform,
+        time_platform,
     ):
         if hasattr(module, "async_setup_entry"):
             continue

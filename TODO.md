@@ -1,13 +1,16 @@
 # TODO
 
-## Refrigerator — remaining SmartThings controls
+## Refrigerator — physical verification of v0.8.6 controls
 
-v0.8.5 adds live SmartThings event tracking for the existing Extended refrigerator entities. The following SmartThings-app features still need schema-confirmed write support before they are exposed:
+The v0.8.5 refrigerator diagnostics captured the appliance's advertised capability schemas, and v0.8.6 implemented the remaining schema-confirmed controls: interior-lighting brightness, gradual brightening, the door-alarm master on/off switch and ice-maker Night Mode schedule editing.
 
-- door alarm master on/off switch in addition to the existing alarm-sound selector;
-- ice-maker Night Mode schedule editing (`startTime` / `endTime`) when `timeSettingSupported` is true.
+Still pending an on-site test session:
 
-Do not guess private `samsungce.*` command names. Use the focused SmartThings Extended diagnostics added in v0.8.5 to capture the appliance's raw capability status and schemas, then implement only the commands actually advertised by this refrigerator.
+- verify the new interior-lighting brightness selector matches the brightness setting shown in the SmartThings app (the previous confusion was caused by the separate night-light brightness attribute);
+- verify the door-alarm on/off switch; the appliance reports the `doorAlarm` attribute as `null` until it first changes, so the switch may start in an unknown state;
+- verify Night Mode schedule editing end to end (set start/end in Home Assistant, confirm in the SmartThings app and on the appliance).
+
+The general rule stands: do not guess private `samsungce.*` command names; implement only commands advertised by the appliance's capability schemas.
 
 ## Dishwasher — deferred physical verification
 

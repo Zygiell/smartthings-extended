@@ -8,7 +8,7 @@ does not currently expose as native entities.
 > from Home Assistant's official `smartthings` integration. It does not store
 > a separate SmartThings PAT.
 
-## Current support — v0.8.1
+## Current support — v0.8.6
 
 ### Device registry integration
 
@@ -94,9 +94,10 @@ Changing the prepared program immediately recalculates the local option lists
 and defaults. No washer command is sent until **Send settings** or **Start** is
 pressed.
 
-Program IDs are currently exposed as `Program XX` because the appliance status
-provides cycle identifiers but not localized SmartThings display names. Friendly
-cycle-name mapping can be added separately without changing the control model.
+Wash programs are shown with friendly names for the tested Samsung `Table_02`
+cycle reference table, for example `Eco 40-60`, `AI Wash` or `Bawełna`. Raw
+Samsung cycle IDs are still used internally for commands, and unknown reference
+tables or unmapped cycle IDs safely fall back to `Program <code>`.
 
 Washer `Start` checks `remoteControlStatus.remoteControlEnabled` first and
 refuses to start when Smart Control is disabled.
@@ -138,15 +139,18 @@ For compatible refrigerators with a `cvroom` CoolSelect+ component it adds:
 
 - CoolSelect+ mode selection using the modes advertised by the appliance
 - AutoFill Pitcher on/off
-- ice-maker Night Mode on/off
+- ice-maker Night Mode on/off with editable start and end times
 - refrigerator Night Light on/off
+- interior-lighting brightness selection
 - Night Light brightness selection
-- door-alarm sound selection
+- gradual-brightening on/off
+- door-alarm master on/off and alarm-sound selection
 
 These refrigerator controls are direct controls: changing an entity immediately
-sends the corresponding SmartThings command. The current Night Mode schedule is
-read by the controller but schedule editing is intentionally deferred until a
-proper time-based Home Assistant UI is added.
+sends the corresponding SmartThings command, and live SmartThings device events
+keep the entities in sync with changes made on the appliance itself or in the
+SmartThings app. All write commands follow the capability schemas advertised by
+the appliance and captured through the integration diagnostics.
 
 ### Samsung cooktop
 
