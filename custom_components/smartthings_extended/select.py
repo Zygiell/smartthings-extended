@@ -70,6 +70,7 @@ async def async_setup_platform(
         entities.extend(
             [
                 FridgeCoolSelectModeSelect(fridge),
+                FridgeInteriorBrightnessSelect(fridge),
                 FridgeNightLightBrightnessSelect(fridge),
                 FridgeDoorAlarmSoundSelect(fridge),
             ]
@@ -494,6 +495,37 @@ class FridgeCoolSelectModeSelect(FridgeBaseSelect):
     async def async_select_option(self, option: str) -> None:
         value = self.controller.coolselect_from_label(option)
         await self.controller.set_coolselect_mode(value)
+
+
+class FridgeInteriorBrightnessSelect(FridgeBaseSelect):
+    _attr_name = "Lodówka — jasność oświetlenia"
+    _attr_icon = "mdi:brightness-5"
+
+    def __init__(self, controller: FridgeController) -> None:
+        super().__init__(controller, "brightness_level")
+
+    @property
+    def available(self) -> bool:
+        return bool(self.controller.brightness_levels)
+
+    @property
+    def options(self) -> list[str]:
+        return [
+            self.controller.brightness_label(value)
+            for value in self.controller.brightness_levels
+        ]
+
+    @property
+    def current_option(self) -> str | None:
+        if not self.controller.brightness_level:
+            return None
+        return self.controller.brightness_label(self.controller.brightness_level)
+
+    async def async_select_option(self, option: str) -> None:
+        value = self.controller.brightness_from_label(
+            option, self.controller.brightness_levels
+        )
+        await self.controller.set_brightness_level(value)
 
 
 class FridgeNightLightBrightnessSelect(FridgeBaseSelect):
